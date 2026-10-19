@@ -168,8 +168,8 @@ def init_db():
     con.close()
 
 
-    def row_dict(row):
-        return dict(row) if row else None
+def row_dict(row):
+    return dict(row) if row else None
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -195,6 +195,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     
    
+    
     def current_user(self):
         token = self.headers.get("X-Session-Token")
 
@@ -211,17 +212,6 @@ class Handler(SimpleHTTPRequestHandler):
         if now - session["last_activity"] > SESSION_TIMEOUT:
             SESSIONS.pop(token, None)
             registrar_log(
-            "SESSAO_EXPIRADA",
-            session["user"]["username"]
-        )
-            return None
-
-            session["last_activity"] = now
-            return session["user"]
-
-        if now - session["last_activity"] > SESSION_TIMEOUT:
-            SESSIONS.pop(token, None)
-            registrar_log(
                 "SESSAO_EXPIRADA",
                 session["user"]["username"]
             )
@@ -229,6 +219,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         session["last_activity"] = now
         return session["user"]
+
 
 
 
