@@ -116,13 +116,14 @@ def init_db():
     cur.execute("SELECT COUNT(*) AS total FROM users")
     if cur.fetchone()["total"] == 0:
         admin_password = os.environ.get("MBF_ADMIN_PASSWORD")
-    operador_password = os.environ.get("MBF_OPERADOR_PASSWORD")
+        operador_password = os.environ.get("MBF_OPERADOR_PASSWORD")
 
-    if not admin_password or not operador_password:
-        raise RuntimeError(
-            "Configure MBF_ADMIN_PASSWORD e MBF_OPERADOR_PASSWORD "
-            "antes de inicializar os usuários."
-        )
+        if not admin_password or not operador_password:
+            raise RuntimeError(
+                "Configure MBF_ADMIN_PASSWORD e MBF_OPERADOR_PASSWORD "
+                "antes de inicializar os usuários."
+            )
+
         cur.executemany(
             "INSERT INTO users (name, username, password, role, sector, active) VALUES (?, ?, ?, ?, ?, ?)",
             [
