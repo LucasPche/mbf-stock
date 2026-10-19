@@ -7,12 +7,13 @@ import sqlite3
 import urllib.parse
 import os
 import logging
-
+import time
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
 DB = ROOT / "mbf_estoque.db"
 SESSIONS = {}
+SESSION_TIMEOUT = 30 * 60
 
 logging.basicConfig(
     filename=ROOT / "mbf_auditoria.log",
@@ -167,8 +168,8 @@ def init_db():
     con.close()
 
 
-def row_dict(row):
-    return dict(row) if row else None
+    def row_dict(row):
+        return dict(row) if row else None
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -192,9 +193,44 @@ class Handler(SimpleHTTPRequestHandler):
             return {}
         return json.loads(self.rfile.read(length).decode("utf-8"))
 
+    
+   
     def current_user(self):
         token = self.headers.get("X-Session-Token")
-        return SESSIONS.get(token)
+
+        if not token:
+            return None
+
+        session = SESSIONS.get(token)
+
+        if not session:
+            return None
+
+        now = time.monotonic()
+
+        if now - session["last_activity"] > SESSION_TIMEOUT:
+            SESSIONS.pop(token, None)
+            registrar_log(
+            "SESSAO_EXPIRADA",
+            session["user"]["username"]
+        )
+            return None
+
+            session["last_activity"] = now
+            return session["user"]
+
+        if now - session["last_activity"] > SESSION_TIMEOUT:
+            SESSIONS.pop(token, None)
+            registrar_log(
+                "SESSAO_EXPIRADA",
+                session["user"]["username"]
+            )
+            return None
+
+        session["last_activity"] = now
+        return session["user"]
+
+
 
     def require_user(self):
         user = self.current_user()
@@ -362,7 +398,10 @@ class Handler(SimpleHTTPRequestHandler):
                 "sector": user["sector"],
                 "active": user["active"],
             }
-            SESSIONS[token] = session_user
+            SESSIONS[token] = {
+                "user": session_user,
+                "last_activity": time.monotonic()
+            }
             self.send_json({"token": token, "user": session_user})
             return
 
