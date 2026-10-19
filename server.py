@@ -403,6 +403,11 @@ class Handler(SimpleHTTPRequestHandler):
                     (part_id, user["id"], "cadastro", int(data["quantity"]), "Peca cadastrada pelo administrador"),
                 )
                 con.commit()
+                registrar_log(
+                    "PECA_CADASTRADA",
+                    user["username"],
+                     f"Codigo: {data['code']} | ID: {part_id}"
+                )
                 self.send_json({"ok": True})
             except sqlite3.IntegrityError:
                 self.send_json({"error": "Codigo ja cadastrado"}, 409)
@@ -553,6 +558,11 @@ class Handler(SimpleHTTPRequestHandler):
                 (status, data.get("admin_note", "").strip(), request_id),
             )
             con.commit()
+            registrar_log(
+                "SOLICITACAO_APROVADA" if status == "aprovado" else "SOLICITACAO_REJEITADA",
+                user["username"],
+                f"Pedido ID: {request_id} | Quantidade: {req['quantity']}"
+            )
             con.close()
             self.send_json({"ok": True})
             return
