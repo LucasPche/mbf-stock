@@ -429,13 +429,26 @@ $("#signupForm").addEventListener("submit", async event => {
   }
 });
 
-$("#logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("mbfToken");
-  localStorage.removeItem("mbfUser");
-  api.token = null;
-  api.user = null;
-  showLogin();
+
+$("#logoutBtn").addEventListener("click", async () => {
+  try {
+    await fetch("/api/logout", {
+      method: "POST",
+      headers: {
+        "X-Session-Token": api.token || ""
+      }
+    });
+  } catch (error) {
+    console.error("Erro ao encerrar sessão:", error);
+  } finally {
+    localStorage.removeItem("mbfToken");
+    localStorage.removeItem("mbfUser");
+    api.token = null;
+    api.user = null;
+    showLogin();
+  }
 });
+
 
 $$(".nav[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {

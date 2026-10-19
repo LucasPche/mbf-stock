@@ -327,6 +327,20 @@ class Handler(SimpleHTTPRequestHandler):
 
     def handle_api_post(self, path):
         data = self.read_json()
+        
+        if path == "/api/logout":
+            token = self.headers.get("X-Session-Token")
+            session = SESSIONS.pop(token, None) if token else None
+
+            if session:
+                registrar_log(
+                    "LOGOUT",
+                    session["user"]["username"]
+                )
+
+            self.send_json({"ok": True})
+            return
+
         if path == "/api/signup":
             required = ["name", "username", "password"]
             if any(str(data.get(field, "")).strip() == "" for field in required):
