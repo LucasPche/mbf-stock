@@ -1,0 +1,17 @@
+﻿*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.exe
+*.dll
+*.lock
+*.pdf
+*.docx
+*.csv
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+venv/

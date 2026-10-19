@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MBF Estoque</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-brand">
+      <img class="logo-img" src="img/Camada_1-1.png" alt="Logo MBF">
+      <h1>Controle de Estoque</h1>
+      <p>Sistema interno para consulta, solicitacao e administracao de pecas.</p>
+    </div>
+    <form class="login-card" id="loginForm">
+      <h2>Entrar</h2>
+      <label>Usuario
+        <input id="username" autocomplete="username" required placeholder="admin ou operador">
+      </label>
+      <label>Senha
+        <input id="password" type="password" autocomplete="current-password" required placeholder="Digite sua senha">
+      </label>
+      <button type="submit">Acessar sistema</button>
+      <button class="secondary" type="button" id="openSignup">Solicitar cadastro</button>
+      <p class="error" id="loginError"></p>
+      <p class="success" id="signupSuccess"></p>
+    </form>
+  </section>
+
+  <section class="app hidden" id="app">
+    <aside class="sidebar">
+      <div class="brand-row">
+        <div class="logo small">MBF</div>
+        <div>
+          <strong>MBF Estoque</strong>
+          <span id="userLabel"></span>
+        </div>
+      </div>
+      <button class="nav active" data-view="dashboard">Dashboard</button>
+      <button class="nav" data-view="estoque">Estoque</button>
+      <button class="nav" data-view="solicitacoes">Solicitacoes</button>
+      <button class="nav admin-only" data-view="admin">Admin pecas</button>
+      <button class="nav admin-only" data-view="usuarios">Usuarios</button>
+      <button class="nav admin-only" data-view="relatorios">Relatorios</button>
+      <button class="nav admin-only" data-view="historico">Historico</button>
+      <button class="nav muted" id="logoutBtn">Sair</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSubtitle">Resumo do estoque e das solicitacoes da MBF.</p>
+        </div>
+        <div class="search">
+          <input id="searchInput" placeholder="Buscar peca, codigo ou local">
+        </div>
+      </header>
+
+      <section class="metrics">
+        <article><span>Pecas cadastradas</span><strong id="metricParts">0</strong></article>
+        <article><span>Abaixo do minimo</span><strong id="metricLow">0</strong></article>
+        <article><span>Solicitacoes pendentes</span><strong id="metricPending">0</strong></article>
+        <article class="admin-only"><span>Cadastros pendentes</span><strong id="metricSignup">0</strong></article>
+      </section>
+
+      <section id="dashboardView" class="view">
+        <div class="dashboard-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Estoque por categoria</h3>
+              <span>Quantidade de itens cadastrados</span>
+            </div>
+            <div class="chart-list" id="categoryChart"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Itens criticos</h3>
+              <span>Abaixo do minimo ou zerados</span>
+            </div>
+            <div class="request-list" id="criticalList"></div>
+          </div>
+
+          <div class="panel wide">
+            <div class="panel-head">
+              <h3>Resumo financeiro</h3>
+              <span>Valor estimado com base no preco unitario</span>
+            </div>
+            <div class="summary-row">
+              <article><span>Valor total</span><strong id="metricValue">R$ 0,00</strong></article>
+              <article><span>Maior estoque</span><strong id="metricTopPart">-</strong></article>
+              <article><span>Fornecedores</span><strong id="metricSuppliers">0</strong></article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="estoqueView" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Pecas no estoque</h3>
+            <select id="categoryFilter">
+              <option value="">Todas as categorias</option>
+              <option>Acao</option>
+              <option>Consumivel</option>
+              <option>Peca</option>
+              <option>Ferramenta</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Peca</th>
+                  <th>Categoria</th>
+                  <th>Fornecedor</th>
+                  <th>Local</th>
+                  <th>Qtd.</th>
+                  <th>Status</th>
+                  <th>Acao</th>
+                </tr>
+              </thead>
+              <tbody id="partsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="solicitacoesView" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Solicitacoes</h3>
+            <span>Acompanhe os pedidos feitos pelos usuarios.</span>
+          </div>
+          <div class="request-list" id="requestsList"></div>
+        </div>
+      </section>
+
+      <section id="adminView" class="view hidden">
+        <div class="grid-2">
+          <form class="panel form" id="partForm">
+            <div class="panel-head flat">
+              <h3 id="formTitle">Cadastrar peca</h3>
+              <button class="secondary" type="button" id="clearForm">Limpar</button>
+            </div>
+            <input type="hidden" id="partId">
+            <label>Codigo <input id="partCode" required></label>
+            <label>Nome da peca <input id="partName" required></label>
+            <label>Categoria
+              <select id="partCategory">
+                <option>Acao</option>
+                <option>Consumivel</option>
+                <option>Peca</option>
+                <option>Ferramenta</option>
+                <option>Outro</option>
+              </select>
+            </label>
+            <div class="two">
+              <label>Quantidade <input id="partQuantity" type="number" min="0" required></label>
+              <label>Minimo <input id="partMin" type="number" min="0" required></label>
+            </div>
+            <div class="two">
+              <label>Unidade <input id="partUnit" required placeholder="un, kg, barra"></label>
+              <label>Local <input id="partLocation" required></label>
+            </div>
+            <div class="two">
+              <label>Fornecedor <input id="partSupplier" placeholder="Fornecedor principal"></label>
+              <label>Preco unitario <input id="partUnitPrice" type="number" min="0" step="0.01" placeholder="0.00"></label>
+            </div>
+            <div class="two">
+              <label>Setor de uso <input id="partSector" placeholder="Corte, Solda, Manutencao"></label>
+              <label>Data de entrada <input id="partEntryDate" type="date"></label>
+            </div>
+            <label>Descricao <textarea id="partDescription" rows="3"></textarea></label>
+            <button type="submit">Salvar peca</button>
+          </form>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Funcoes de admin</h3>
+              <span>Cadastre, edite e exclua pecas. Ao aprovar uma solicitacao, o estoque baixa automaticamente.</span>
+            </div>
+            <div class="admin-note">
+              <strong>CRUD do estoque</strong>
+              <p>Create: cadastrar peca. Read: listar pecas. Update: editar cadastro. Delete: excluir peca.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="historicoView" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Historico de movimentacoes</h3>
+            <span>Registro das acoes feitas no estoque.</span>
+          </div>
+          <div class="request-list" id="movementsList"></div>
+        </div>
+      </section>
+
+      <section id="usuariosView" class="view hidden">
+        <div class="grid-2">
+          <form class="panel form" id="userForm">
+            <div class="panel-head flat">
+              <h3 id="userFormTitle">Editar usuario</h3>
+              <button class="secondary" type="button" id="clearUserForm">Limpar</button>
+            </div>
+            <input type="hidden" id="userId">
+            <label>Nome <input id="userName" required></label>
+            <label>Login <input id="userUsername" required></label>
+            <div class="two">
+              <label>Perfil
+                <select id="userRole">
+                  <option value="user">Usuario comum</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </label>
+              <label>Status
+                <select id="userActive">
+                  <option value="1">Ativo</option>
+                  <option value="0">Bloqueado</option>
+                </select>
+              </label>
+            </div>
+            <label>Setor <input id="userSector" placeholder="Administracao, Corte, Solda..."></label>
+            <label>Nova senha <input id="userPassword" type="password" placeholder="Deixe vazio para manter"></label>
+            <button type="submit">Salvar usuario</button>
+          </form>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Pedidos de cadastro</h3>
+              <span>O admin libera ou rejeita novos acessos.</span>
+            </div>
+            <div class="request-list" id="signupRequestsList"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Usuarios liberados</h3>
+              <span>Pessoas que ja conseguem entrar no sistema.</span>
+            </div>
+            <div class="request-list" id="usersList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="relatoriosView" class="view hidden">
+        <div class="dashboard-grid">
+          <div class="panel wide">
+            <div class="panel-head">
+              <h3>Relatorio de estoque minimo</h3>
+              <button type="button" id="exportCritical">Exportar CSV</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Codigo</th>
+                    <th>Peca</th>
+                    <th>Qtd.</th>
+                    <th>Minimo</th>
+                    <th>Faltam</th>
+                    <th>Fornecedor</th>
+                  </tr>
+                </thead>
+                <tbody id="criticalReport"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Solicitacoes por status</h3>
+              <span>Controle para apresentacao</span>
+            </div>
+            <div class="chart-list" id="requestChart"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Relatorio geral</h3>
+              <button type="button" id="exportAll">Exportar estoque</button>
+            </div>
+            <div class="admin-note">
+              <strong>Uso no TCC</strong>
+              <p>Mostre que o sistema gera informacoes para tomada de decisao: reposicao, valor estimado, fornecedores e solicitacoes pendentes.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <dialog id="signupDialog">
+    <form method="dialog" class="modal" id="signupForm">
+      <h3>Solicitar cadastro</h3>
+      <label>Nome completo
+        <input id="signupName" required placeholder="Seu nome">
+      </label>
+      <label>Usuario para login
+        <input id="signupUsername" required placeholder="ex.: lucas">
+      </label>
+      <label>Senha
+        <input id="signupPassword" type="password" minlength="6" required placeholder="minimo 6 caracteres">
+      </label>
+      <label>Setor
+        <input id="signupSector" placeholder="ex.: Corte, Solda, Almoxarifado">
+      </label>
+      <label>Motivo do acesso
+        <textarea id="signupReason" rows="3" placeholder="Explique rapidamente por que precisa do acesso"></textarea>
+      </label>
+      <p class="error" id="signupError"></p>
+      <div class="modal-actions">
+        <button class="secondary" value="cancel" type="button" id="cancelSignup">Cancelar</button>
+        <button type="submit">Enviar para liberacao</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="requestDialog">
+    <form method="dialog" class="modal" id="requestForm">
+      <h3>Solicitar peca</h3>
+      <input type="hidden" id="requestPartId">
+      <strong id="requestPartName"></strong>
+      <label>Quantidade
+        <input id="requestQuantity" type="number" min="1" value="1" required>
+      </label>
+      <label>Comentarios ou alteracoes desejadas
+        <textarea id="requestComment" rows="4" placeholder="Ex.: precisa cortar, separar para ordem de servico, trocar medida..."></textarea>
+      </label>
+      <div class="modal-actions">
+        <button class="secondary" value="cancel" type="button" id="cancelRequest">Cancelar</button>
+        <button type="submit">Enviar solicitacao</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
