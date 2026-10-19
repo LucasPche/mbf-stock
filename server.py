@@ -6,12 +6,28 @@ import secrets
 import sqlite3
 import urllib.parse
 import os
+import logging
+
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
 DB = ROOT / "mbf_estoque.db"
 SESSIONS = {}
 
+logging.basicConfig(
+    filename=ROOT / "mbf_auditoria.log",
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    encoding="utf-8"
+)
+
+def registrar_log(acao, usuario="sistema", detalhes=""):
+    logging.info(
+        "Usuario: %s | Acao: %s | Detalhes: %s",
+        usuario,
+        acao,
+        detalhes
+    )
 
 def connect():
     con = sqlite3.connect(DB)
@@ -329,11 +345,14 @@ class Handler(SimpleHTTPRequestHandler):
             user = con.execute("SELECT * FROM users WHERE username = ?", (data.get("username"),)).fetchone()
             con.close()
             if not user or not check_password(data.get("password", ""), user["password"]):
+                registrar_log("LOGIN_FALHOU", "desconhecido", "Credenciais invalidas")
                 self.send_json({"error": "Usuario ou senha invalido"}, 401)
                 return
             if not user["active"]:
+                registrar_log("LOGIN_BLOQUEADO", user["username"], "Conta desativada")
                 self.send_json({"error": "Usuario bloqueado. Procure o administrador"}, 403)
                 return
+            registrar_log("LOGIN_SUCESSO", user["username"], "Autenticacao realizada")
             token = secrets.token_hex(24)
             session_user = {
                 "id": user["id"],
