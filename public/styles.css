@@ -514,3 +514,34 @@ dialog::backdrop {
   object-fit: contain;
   margin-bottom: 18px;
 }
+/* Politica de Privacidade - MBF Estoque */
+.privacy-section {
+    margin: 24px auto;
+    padding: 18px 22px;
+    max-width: 900px;
+    border: 1px solid #34465a;
+    border-radius: 12px;
+    background: #172536;
+    color: #f1f5f9;
+}
+
+.privacy-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.privacy-section h2 {
+    margin-top: 20px;
+    font-size: 20px;
+}
+
+.privacy-section h3 {
+    margin-top: 16px;
+    font-size: 16px;
+}
+
+.privacy-section p {
+    line-height: 1.7;
+    font-size: 14px;
+}
