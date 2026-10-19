@@ -171,6 +171,18 @@
               <label>Fornecedor <input id="partSupplier" placeholder="Fornecedor principal"></label>
               <label>Preco unitario <input id="partUnitPrice" type="number" min="0" step="0.01" placeholder="0.00"></label>
             </div>
+            
+            <div class="two">
+              <label>CEP do fornecedor
+               <input id="supplierCep" type="text" maxlength="9"
+               placeholder="00000-000">
+              </label>
+                <label>Endereco do fornecedor
+                <input id="supplierAddress" type="text"
+               placeholder="Endereco consultado pelo CEP" readonly>
+              </label>
+            </div>
+
             <div class="two">
               <label>Setor de uso <input id="partSector" placeholder="Corte, Solda, Manutencao"></label>
               <label>Data de entrada <input id="partEntryDate" type="date"></label>
@@ -383,8 +395,11 @@
         e nao representa, isoladamente, conformidade
         integral com a LGPD.
     </p>
+    
 </details>
 
   <script src="app.js"></script>
 </body>
+
 </html>
+

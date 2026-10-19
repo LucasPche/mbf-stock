@@ -538,3 +538,52 @@ if (api.token && api.user) {
 } else {
   showLogin();
 }
+
+/* Integracao com API externa ViaCEP */
+const supplierCepInput = document.getElementById("supplierCep");
+const supplierAddressInput = document.getElementById("supplierAddress");
+
+if (supplierCepInput && supplierAddressInput) {
+    supplierCepInput.addEventListener("blur", async () => {
+        const cep = supplierCepInput.value.replace(/\D/g, "");
+
+        supplierAddressInput.value = "";
+
+        if (cep.length !== 8) {
+            if (cep.length > 0) {
+                supplierAddressInput.value = "CEP invalido";
+            }
+            return;
+        }
+
+        supplierAddressInput.value = "Consultando CEP...";
+
+        try {
+            const response = await fetch(
+                `https://viacep.com.br/ws/${cep}/json/`
+            );
+
+            if (!response.ok) {
+                throw new Error("Falha na consulta");
+            }
+
+            const endereco = await response.json();
+
+            if (endereco.erro) {
+                supplierAddressInput.value = "CEP nao encontrado";
+                return;
+            }
+
+            supplierAddressInput.value = [
+                endereco.logradouro,
+                endereco.bairro,
+                endereco.localidade,
+                endereco.uf
+            ].filter(Boolean).join(", ");
+
+        } catch (error) {
+            supplierAddressInput.value = "Erro ao consultar CEP";
+            console.error("Erro na consulta ViaCEP:", error);
+        }
+    });
+}
