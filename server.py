@@ -33,6 +33,7 @@ def registrar_log(acao, usuario="sistema", detalhes=""):
 
 def connect():
     con = sqlite3.connect(DB)
+    con.execute("PRAGMA foreign_keys = ON")
     con.row_factory = sqlite3.Row
     return con
 
@@ -516,6 +517,18 @@ class Handler(SimpleHTTPRequestHandler):
 
         if path.startswith("/api/parts/"):
             part_id = int(path.rsplit("/", 1)[1])
+
+            peca_anterior = cur.execute(
+                "SELECT quantity FROM parts WHERE id = ?",
+            (part_id,)
+            ).fetchone()
+            if peca_anterior is None:
+                con.close()
+                self.send_json({"error": "Peca nao encontrada"}, 404)
+                return
+            quantidade_anterior = int(peca_anterior["quantity"])
+            quantidade_nova = int(data["quantity"])
+            diferenca = quantidade_nova - quantidade_anterior
             cur.execute(
                 """
                 UPDATE parts
@@ -539,10 +552,17 @@ class Handler(SimpleHTTPRequestHandler):
                     part_id,
                 ),
             )
-            cur.execute(
-                "INSERT INTO movements (part_id, user_id, type, quantity, note) VALUES (?, ?, ?, ?, ?)",
-                (part_id, user["id"], "edicao", int(data["quantity"]), "Cadastro da peca atualizado"),
+            if diferenca != 0:
+                cur.execute(
+                    "INSERT INTO movements (part_id, user_id, type, quantity, note) VALUES (?, ?, ?, ?, ?)",
+             (
+                part_id,
+                user["id"],
+                "entrada" if diferenca > 0 else "saida",
+                abs(diferenca),
+                "Ajuste de estoque por edicao"
             )
+        )
             con.commit()
             con.close()
             self.send_json({"ok": True})

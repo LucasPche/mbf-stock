@@ -15,6 +15,16 @@ const state = {
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
 async function request(path, options = {}) {
   let response;
   try {
@@ -131,19 +141,21 @@ function renderParts() {
   const rows = filteredParts();
   $("#partsTable").innerHTML = rows.map(part => {
     const status = statusOf(part);
+    const partId = Number(part.id);
+    if (!Number.isSafeInteger(partId) || partId <= 0) return "";
     const adminActions = api.user.role === "admin"
-      ? `<button class="secondary" onclick="editPart(${part.id})">Editar</button><button class="secondary" onclick="deletePart(${part.id})">Excluir</button>`
+      ? `<button class="secondary" onclick="editPart(${partId})">Editar</button><button class="secondary" onclick="deletePart(${partId})">Excluir</button>`
       : "";
     return `
       <tr>
-        <td><strong>${part.code}</strong></td>
-        <td>${part.name}<br><small>${part.description || ""}</small></td>
-        <td>${part.category}</td>
-        <td>${part.supplier || "-"}<br><small>${money(part.unit_price)} / ${part.unit}</small></td>
-        <td>${part.location}</td>
-        <td><strong>${part.quantity}</strong> ${part.unit}<br><small>Min. ${part.min_quantity}</small></td>
-        <td><span class="badge ${status}">${statusLabel(status)}</span></td>
-        <td><div class="row-actions"><button onclick="openRequest(${part.id})">Solicitar</button>${adminActions}</div></td>
+        <td><strong>${escapeHTML(part.code)}</strong></td>
+        <td>${escapeHTML(part.name)}<br><small>${escapeHTML(part.description || "")}</small></td>
+        <td>${escapeHTML(part.category)}</td>
+        <td>${escapeHTML(part.supplier || "-")}<br><small>${money(part.unit_price)} / ${part.unit}</small></td>
+        <td>${escapeHTML(part.location)}</td>
+        <td><strong>${part.quantity}</strong> ${escapeHTML(part.unit)}<br><small>Min. ${part.min_quantity}</small></td>
+        <td><span class="badge ${status}">${escapeHTML(statusLabel(status))}</span></td>
+        <td><div class="row-actions"><button onclick="openRequest(${partId})">Solicitar</button>${adminActions}</div></td>
       </tr>
     `;
   }).join("") || `<tr><td colspan="7">Nenhuma peca encontrada.</td></tr>`;
@@ -157,13 +169,13 @@ function renderRequests() {
     return `
       <article class="request-card">
         <div class="row-actions">
-          <strong>#${req.id} - ${req.part_code} ${req.part_name}</strong>
-          <span class="badge ${req.status}">${req.status}</span>
+         <strong>#${escapeHTML(req.id)} - ${escapeHTML(req.part_code)} - ${escapeHTML(req.part_name)}</strong>
+          <span class="badge ${escapeHTML(req.status)}">${escapeHTML(req.status)}</span>
         </div>
-        <p><strong>Quantidade:</strong> ${req.quantity} ${req.unit}</p>
-        <p><strong>Solicitante:</strong> ${req.user_name}</p>
-        <p><strong>Comentario:</strong> ${req.comment || "Sem comentario"}</p>
-        <p><strong>Resposta admin:</strong> ${req.admin_note || "Sem resposta"}</p>
+        <p><strong>Quantidade:</strong> ${escapeHTML(req.quantity)} ${escapeHTML(req.unit)}</p>
+        <p><strong>Solicitante:</strong> ${escapeHTML(req.user_name)}</p>
+        <p><strong>Comentario:</strong> ${escapeHTML(req.comment || "Sem comentario")}</p>
+        <p><strong>Resposta admin:</strong> ${escapeHTML(req.admin_note || "Sem resposta")}</p>
         ${adminActions}
       </article>
     `;
@@ -173,10 +185,10 @@ function renderRequests() {
 function renderMovements() {
   $("#movementsList").innerHTML = state.movements.map(item => `
     <article class="request-card">
-      <strong>${item.type.toUpperCase()} - ${item.part_name || "Sistema"}</strong>
-      <p>Quantidade: ${item.quantity}</p>
-      <p>Usuario: ${item.user_name || "Sem usuario"} | ${item.created_at}</p>
-      <p>${item.note || ""}</p>
+      <strong>${escapeHTML(String(item.type || "").toUpperCase())} - ${escapeHTML(item.part_name || "Sistema")}</strong>
+      <p>Quantidade: ${escapeHTML(item.quantity)}</p>
+      <p>Usuario: ${escapeHTML(item.user_name || "Sem usuario")} | ${escapeHTML(item.created_at)}</p>
+      <p>${escapeHTML(item.note || "")}</p>
     </article>
   `).join("") || `<div class="request-card"><p>Nenhuma movimentacao encontrada.</p></div>`;
 }
@@ -184,40 +196,51 @@ function renderMovements() {
 function renderUsers() {
   const list = $("#usersList");
   if (!list) return;
-  list.innerHTML = state.users.map(user => `
+  list.innerHTML = state.users.map(user => {
+  const userId = Number(user.id);
+  if (!Number.isSafeInteger(userId) || userId <= 0) return "";
+
+  return `
     <article class="request-card">
       <div class="row-actions">
-        <strong>${user.name}</strong>
+        <strong>${escapeHTML(user.name)}</strong>
         <span class="badge ${user.active ? "ativo" : "bloqueado"}">${user.active ? "ativo" : "bloqueado"}</span>
       </div>
-      <p>Login: ${user.username}</p>
+      <p>Login: ${escapeHTML(user.username)}</p>
       <p>Perfil: ${user.role === "admin" ? "Administrador" : "Usuario comum"}</p>
-      <p>Setor: ${user.sector || "Nao informado"}</p>
+      <p>Setor: ${escapeHTML(user.sector || "Nao informado")}</p>
       <div class="row-actions">
-        <button class="secondary" onclick="editUser(${user.id})">Editar</button>
-        <button class="secondary" onclick="deleteUser(${user.id})">Excluir</button>
+        <button class="secondary" onclick="editUser(${userId})">Editar</button>
+        <button class="secondary" onclick="deleteUser(${userId})">Excluir</button>
       </div>
     </article>
-  `).join("") || `<div class="request-card"><p>Nenhum usuario liberado.</p></div>`;
+    `;
+  }).join("") || `<div class="request-card"><p>Nenhum usuario liberado.</p></div>`;
 }
 
 function renderSignupRequests() {
   const list = $("#signupRequestsList");
   if (!list) return;
   list.innerHTML = state.signupRequests.map(req => {
+    const reqId = Number(req.id);
+    if (!Number.isSafeInteger(reqId) || reqId <= 0) return "";
+
     const actions = req.status === "pendente"
-      ? `<div class="row-actions"><button onclick="reviewSignup(${req.id}, 'aprovado')">Liberar</button><button class="secondary" onclick="reviewSignup(${req.id}, 'rejeitado')">Rejeitar</button></div>`
-      : "";
+    ? `<div class="row-actions">
+      <button onclick="reviewSignup(${reqId}, 'aprovado')">Liberar</button>
+      <button class="secondary" onclick="reviewSignup(${reqId}, 'rejeitado')">Rejeitar</button>
+    </div>`
+    : "";
     return `
       <article class="request-card">
         <div class="row-actions">
-          <strong>${req.name}</strong>
-          <span class="badge ${req.status}">${req.status}</span>
+          <strong>${escapeHTML(req.name)}</strong>
+          <span class="badge ${escapeHTML(req.status)}">${escapeHTML(req.status)}</span>
         </div>
-        <p><strong>Login solicitado:</strong> ${req.username}</p>
-        <p><strong>Setor:</strong> ${req.sector || "Nao informado"}</p>
-        <p><strong>Motivo:</strong> ${req.reason || "Sem motivo informado"}</p>
-        <p><strong>Resposta admin:</strong> ${req.admin_note || "Sem resposta"}</p>
+        <p><strong>Login solicitado:</strong> ${escapeHTML(req.username)}</p>
+        <p><strong>Setor:</strong> ${escapeHTML(req.sector || "Nao informado")}</p>
+        <p><strong>Motivo:</strong> ${escapeHTML(req.reason || "Sem motivo informado")}</p>
+        <p><strong>Resposta admin:</strong> ${escapeHTML(req.admin_note || "Sem resposta")}</p>
         ${actions}
       </article>
     `;
