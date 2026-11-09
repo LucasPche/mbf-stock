@@ -8,6 +8,7 @@ import urllib.parse
 import os
 import logging
 import time
+import math
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
@@ -418,6 +419,26 @@ class Handler(SimpleHTTPRequestHandler):
             if any(str(data.get(field, "")).strip() == "" for field in required):
                 self.send_json({"error": "Preencha todos os campos obrigatorios"}, 400)
                 return
+                
+            
+            try:
+                quantidade = int(data["quantity"])
+                quantidade_minima = int(data["min_quantity"])
+                preco = float(data.get("unit_price") or 0)
+
+                if quantidade < 0 or quantidade_minima < 0:
+                    self.send_json({"error": "As quantidades não podem ser negativas"}, 400)
+                    return
+
+                if not math.isfinite(preco) or preco < 0:
+                    self.send_json({"error": "O preço deve ser válido e não negativo"}, 400)
+                    return
+
+            except (ValueError, TypeError, OverflowError, KeyError):
+                self.send_json({"error": "Informe quantidades inteiras e um preço válido"}, 400)
+                return
+
+
             con = connect()
             try:
                 cur = con.cursor()
@@ -658,8 +679,31 @@ class Handler(SimpleHTTPRequestHandler):
         if not user:
             return
         if path.startswith("/api/parts/"):
-            part_id = int(path.rsplit("/", 1)[1])
+            
+            try:
+                part_id = int(path.rsplit("/", 1)[1])
+            except ValueError:
+                self.send_json({"error": "ID da peça inválido"}, 400)
+                return
+
             con = connect()
+            vinculada = con.execute(
+            "SELECT 1 FROM requests WHERE part_id = ? LIMIT 1",
+            (part_id,)
+        ).fetchone()
+            
+            movimentacao = con.execute(
+                "SELECT 1 FROM movements WHERE part_id = ? LIMIT 1",
+                (part_id,)
+        ).fetchone()
+
+            if vinculada or movimentacao:
+                con.close()
+                self.send_json({
+                    "error": "Esta peça possui solicitações ou movimentações vinculadas e não pode ser excluída."
+                }, 409)
+                return
+
             con.execute("DELETE FROM parts WHERE id = ?", (part_id,))
             con.commit()
             con.close()
