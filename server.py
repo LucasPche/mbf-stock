@@ -521,7 +521,14 @@ class Handler(SimpleHTTPRequestHandler):
         cur = con.cursor()
 
         if path.startswith("/api/parts/"):
-            part_id = int(path.rsplit("/", 1)[1])
+            try:
+                part_id = int(path.rsplit("/", 1)[1])
+                if part_id <= 0:
+                    raise ValueError("ID invalido")
+            except (ValueError, TypeError, OverflowError):
+                con.close()
+                self.send_json({"error": "ID da peca invalido"}, 400)
+                return
 
             peca_anterior = cur.execute(
                 "SELECT quantity FROM parts WHERE id = ?",
