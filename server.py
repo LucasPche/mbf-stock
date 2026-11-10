@@ -491,7 +491,12 @@ class Handler(SimpleHTTPRequestHandler):
                 con.close()
                 self.send_json({"error": "Peca nao encontrada"}, 404)
                 return
-            quantity = int(data.get("quantity", 0))
+            try:
+                quantity = int(data.get("quantity", 0))
+            except (ValueError, TypeError, OverflowError):
+                con.close()
+                self.send_json({"error": "Quantidade deve ser um numero inteiro valido"}, 400)
+                return
             if quantity <= 0:
                 con.close()
                 self.send_json({"error": "Quantidade invalida"}, 400)
@@ -527,7 +532,22 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "Peca nao encontrada"}, 404)
                 return
             quantidade_anterior = int(peca_anterior["quantity"])
-            quantidade_nova = int(data["quantity"])
+            try:
+                quantidade_nova = int(data["quantity"])
+                if quantidade_nova < 0:
+                    raise ValueError("Quantidade negativa")
+            except (ValueError, TypeError, OverflowError, KeyError):
+                con.close()
+                self.send_json({"error": "Quantidade deve ser um inteiro maior ou igual a zero"}, 400)
+                return
+            try:
+                preco_unitario = float(data.get("unit_price") or 0)
+                if not math.isfinite(preco_unitario) or preco_unitario < 0:
+                    raise ValueError("Preco invalido")
+            except (ValueError, TypeError, OverflowError):
+                con.close()
+                self.send_json({"error": "Preco unitario invalido"}, 400)
+                return
             diferenca = quantidade_nova - quantidade_anterior
             cur.execute(
                 """
@@ -545,7 +565,7 @@ class Handler(SimpleHTTPRequestHandler):
                     int(data["min_quantity"]),
                     data["unit"].strip(),
                     data.get("supplier", "").strip(),
-                    float(data.get("unit_price") or 0),
+                    preco_unitario,
                     data.get("sector", "").strip(),
                     data.get("entry_date", "").strip(),
                     data.get("description", "").strip(),
