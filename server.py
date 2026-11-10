@@ -492,8 +492,13 @@ class Handler(SimpleHTTPRequestHandler):
             user = self.require_user()
             if not user:
                 return
+            part_id = validar_id(data.get("part_id"))
+
+            if part_id is None:
+                self.send_json({"error": "ID da peca invalido"}, 400)
+                return
             con = connect()
-            part = con.execute("SELECT * FROM parts WHERE id = ?", (data.get("part_id"),)).fetchone()
+            part = con.execute("SELECT * FROM parts WHERE id = ?", (part_id,)).fetchone()
             if not part:
                 con.close()
                 self.send_json({"error": "Peca nao encontrada"}, 404)
@@ -659,7 +664,12 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path.startswith("/api/requests/"):
-            request_id = int(path.rsplit("/", 1)[1])
+            request_id = validar_id(path.rsplit("/", 1)[1])
+
+        if request_id is None:
+            con.close()
+            self.send_json({"error": "ID da solicitacao invalido"}, 400)
+            return
             status = data.get("status")
             if status not in ("aprovado", "rejeitado"):
                 con.close()
@@ -747,10 +757,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/api/parts/"):
             
-            try:
-                part_id = int(path.rsplit("/", 1)[1])
-            except ValueError:
-                self.send_json({"error": "ID da peça inválido"}, 400)
+            part_id = validar_id(path.rsplit("/", 1)[1])
+
+            if part_id is None:
+                self.send_json({"error": "ID da peca invalido"}, 400)
                 return
 
             con = connect()
