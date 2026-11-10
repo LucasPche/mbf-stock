@@ -548,6 +548,14 @@ class Handler(SimpleHTTPRequestHandler):
                 con.close()
                 self.send_json({"error": "Preco unitario invalido"}, 400)
                 return
+            try:
+                estoque_minimo = int(data["min_quantity"])
+                if estoque_minimo < 0:
+                    raise ValueError("Estoque minimo negativo")
+            except (ValueError, TypeError, OverflowError, KeyError):
+                con.close()
+                self.send_json({"error": "Estoque minimo deve ser um inteiro maior ou igual a zero"}, 400)
+                return
             diferenca = quantidade_nova - quantidade_anterior
             cur.execute(
                 """
@@ -562,7 +570,7 @@ class Handler(SimpleHTTPRequestHandler):
                     data["category"].strip(),
                     data["location"].strip(),
                     int(data["quantity"]),
-                    int(data["min_quantity"]),
+                    estoque_minimo,
                     data["unit"].strip(),
                     data.get("supplier", "").strip(),
                     preco_unitario,
