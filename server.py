@@ -30,7 +30,14 @@ def registrar_log(acao, usuario="sistema", detalhes=""):
         acao,
         detalhes
     )
-
+def validar_id(valor):
+    try:
+        numero = int(valor)
+        if numero <= 0:
+            return None
+        return numero
+    except (ValueError, TypeError, OverflowError):
+        return None
 def connect():
     con = sqlite3.connect(DB)
     con.execute("PRAGMA foreign_keys = ON")
@@ -604,7 +611,12 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path.startswith("/api/users/"):
-            target_id = int(path.rsplit("/", 1)[1])
+            target_id = validar_id(path.rsplit("/", 1)[1])
+
+        if target_id is None:
+            con.close()
+            self.send_json({"error": "ID do usuario invalido"}, 400)
+            return
             target = cur.execute("SELECT * FROM users WHERE id = ?", (target_id,)).fetchone()
             if not target:
                 con.close()
