@@ -211,3 +211,11 @@ Durante o desenvolvimento, foram adicionados módulos específicos para seguran�
 Essas alterações contribuíram para melhorar a organização do código, a validação das operações e o controle das informações armazenadas.
 
 O projeto reúne funcionalidades de controle de estoque e apresenta uma estrutura que pode continuar sendo aprimorada conforme as necessidades de manutenção e utilização do sistema.
+
+## Modelagem BPMN 2.0 (11/11/2026)
+
+O arquivo [docs/processo_retirada.bpmn](docs/processo_retirada.bpmn) contém um modelo BPMN 2.0 em XML para o fluxo de solicitação de retirada. O processo apresenta raias de Operador, Administrador e Sistema, eventos inicial/finais, tarefas e gateways exclusivos para aprovação e saldo disponível. O arquivo pode ser aberto em um editor BPMN compatível para diagramação e exportação de figura. Trata-se de modelo acadêmico não executável; a renderização visual e a conformidade detalhada devem ser conferidas antes da entrega.
+
+## Proteção de apresentação e exportação (11/11/2026)
+
+O arquivo `public/app.js` recebeu escape de HTML em valores dinâmicos do dashboard e da tabela de itens críticos, além de neutralização de prefixos interpretáveis como fórmulas na exportação CSV. As alterações foram verificadas por inspeção estática de sintaxe JavaScript, mas ainda exigem testes de navegador e regressão da branch após os commits. Não declarar auditoria de segurança integral.
