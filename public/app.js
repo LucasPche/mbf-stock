@@ -350,6 +350,7 @@ function fillForm(part = null) {
   // O CEP não é persistido no cadastro atual; exigir nova informação ao salvar.
   $("#supplierCep").value = "";
   $("#supplierAddress").value = "";
+  validatedSupplierCep = "";
   $("#formTitle").textContent = part ? "Editar peca" : "Cadastrar peca";
 }
 
@@ -512,7 +513,7 @@ $("#partForm").addEventListener("submit", async event => {
     $("#supplierCep").focus();
     return;
   }
-  if (!$("#supplierAddress").value.trim() || /^(CEP invalido|CEP nao encontrado|Erro ao consultar CEP|Consultando CEP)/i.test($("#supplierAddress").value.trim())) {
+  if (validatedSupplierCep !== cep || !$("#supplierAddress").value.trim() || /^(CEP invalido|CEP nao encontrado|Erro ao consultar CEP|Consultando CEP)/i.test($("#supplierAddress").value.trim())) {
     alert("Aguarde a consulta e confirme um CEP válido antes de salvar.");
     $("#supplierCep").focus();
     return;
@@ -610,8 +611,13 @@ if (api.token && api.user) {
 /* Integracao com API externa ViaCEP */
 const supplierCepInput = document.getElementById("supplierCep");
 const supplierAddressInput = document.getElementById("supplierAddress");
+let validatedSupplierCep = "";
 
 if (supplierCepInput && supplierAddressInput) {
+    supplierCepInput.addEventListener("input", () => {
+        validatedSupplierCep = "";
+        supplierAddressInput.value = "";
+    });
     supplierCepInput.addEventListener("blur", async () => {
         const cep = supplierCepInput.value.replace(/\D/g, "");
 
@@ -636,6 +642,7 @@ if (supplierCepInput && supplierAddressInput) {
             }
 
             const endereco = await response.json();
+            if (supplierCepInput.value.replace(/\D/g, "") !== cep) return;
 
             if (endereco.erro) {
                 supplierAddressInput.value = "CEP nao encontrado";
@@ -648,8 +655,10 @@ if (supplierCepInput && supplierAddressInput) {
                 endereco.localidade,
                 endereco.uf
             ].filter(Boolean).join(", ");
+            if (supplierAddressInput.value.trim()) validatedSupplierCep = cep;
 
         } catch (error) {
+            if (supplierCepInput.value.replace(/\D/g, "") !== cep) return;
             supplierAddressInput.value = "Erro ao consultar CEP";
             console.error("Erro na consulta ViaCEP:", error);
         }
