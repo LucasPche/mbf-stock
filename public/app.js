@@ -156,9 +156,9 @@ function renderParts() {
         <td><strong>${escapeHTML(part.code)}</strong></td>
         <td>${escapeHTML(part.name)}<br><small>${escapeHTML(part.description || "")}</small></td>
         <td>${escapeHTML(part.category)}</td>
-        <td>${escapeHTML(part.supplier || "-")}<br><small>${money(part.unit_price)} / ${part.unit}</small></td>
+        <td>${escapeHTML(part.supplier || "-")}<br><small>${escapeHTML(money(part.unit_price))} / ${escapeHTML(part.unit)}</small></td>
         <td>${escapeHTML(part.location)}</td>
-        <td><strong>${part.quantity}</strong> ${escapeHTML(part.unit)}<br><small>Min. ${part.min_quantity}</small></td>
+        <td><strong>${escapeHTML(part.quantity)}</strong> ${escapeHTML(part.unit)}<br><small>Min. ${escapeHTML(part.min_quantity)}</small></td>
         <td><span class="badge ${status}">${escapeHTML(statusLabel(status))}</span></td>
         <td><div class="row-actions"><button onclick="openRequest(${partId})">Solicitar</button>${adminActions}</div></td>
       </tr>
@@ -168,8 +168,10 @@ function renderParts() {
 
 function renderRequests() {
   $("#requestsList").innerHTML = state.requests.map(req => {
-    const adminActions = api.user.role === "admin" && req.status === "pendente"
-      ? `<div class="row-actions"><button onclick="reviewRequest(${req.id}, 'aprovado')">Aprovar</button><button class="secondary" onclick="reviewRequest(${req.id}, 'rejeitado')">Rejeitar</button></div>`
+    const requestId = Number(req.id);
+    const safeRequestId = Number.isSafeInteger(requestId) && requestId > 0 ? requestId : null;
+    const adminActions = api.user.role === "admin" && req.status === "pendente" && safeRequestId !== null
+      ? `<div class="row-actions"><button onclick="reviewRequest(${safeRequestId}, 'aprovado')">Aprovar</button><button class="secondary" onclick="reviewRequest(${safeRequestId}, 'rejeitado')">Rejeitar</button></div>`
       : "";
     return `
       <article class="request-card">
