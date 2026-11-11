@@ -97,6 +97,8 @@ async function loadAll() {
 }
 
 function showApp() {
+  // Nunca reutilizar uma tela administrativa da sessão anterior.
+  state.view = "dashboard";
   $("#loginScreen").classList.add("hidden");
   $("#app").classList.remove("hidden");
   $("#userLabel").textContent = `${api.user.name} - ${api.user.role === "admin" ? "Admin" : "Usuario"}`;
@@ -310,6 +312,10 @@ function renderReports() {
 }
 
 function updateView() {
+  // Proteção visual adicional: o servidor continua responsável pela autorização.
+  if (api.user?.role !== "admin" && ["admin", "usuarios"].includes(state.view)) {
+    state.view = "dashboard";
+  }
   const titles = {
     estoque: ["Estoque", "Consulte as pecas disponiveis e solicite ao almoxarifado."],
     dashboard: ["Dashboard", "Resumo do estoque e das solicitacoes da MBF."],
@@ -487,8 +493,9 @@ $("#logoutBtn").addEventListener("click", async () => {
 });
 
 
-$$(".nav[data-view]").forEach(btn => {
+$(".nav[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {
+    if (api.user?.role !== "admin" && ["admin", "usuarios"].includes(btn.dataset.view)) return;
     state.view = btn.dataset.view;
     updateView();
   });
