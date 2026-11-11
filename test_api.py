@@ -118,7 +118,12 @@ class APITests(unittest.TestCase):
         self.assertEqual(self.request('PUT',f"/api/parts/{part['id']}",payload,token)[0],200)
         status,body=self.request('GET','/api/movements',token=token)
         self.assertTrue(any(x['part_id']==part['id'] and x['quantity']==5 and x['type']=='entrada' for x in body['movements']))
-        self.assertEqual(self.request('DELETE',f"/api/parts/{part['id']}",token=token)[0],409)
+        self.assertEqual(self.request('DELETE',f"/api/parts/{part['id']}",token=token)[0],200)
+        status, body = self.request('GET', '/api/parts', token=token)
+        self.assertEqual(status, 200)
+        self.assertFalse(any(p['id'] == part['id'] for p in body['parts']))
+        status, body = self.request('GET', '/api/movements', token=token)
+        self.assertTrue(any(m['part_id'] == part['id'] and m['type'] == 'exclusao' for m in body['movements']))
 
     def test_solicitacao_aprovacao_e_baixa(self):
         operator=self.login('operador','OperadorTeste123!')
