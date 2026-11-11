@@ -37,7 +37,7 @@ async function request(path, options = {}) {
       }
     });
   } catch {
-    throw new Error("Servidor nao esta rodando. Abra a pasta no VS Code, rode python server.py e acesse http://localhost:8000");
+    throw new Error("O servidor não está em execução. Abra a pasta no VS Code, rode python server.py e acesse http://localhost:8000");
   }
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Erro no sistema");
@@ -189,7 +189,7 @@ function renderRequests() {
         ${adminActions}
       </article>
     `;
-  }).join("") || `<div class="request-card"><p>Nenhuma solicitacao encontrada.</p></div>`;
+  }).join("") || `<div class="request-card"><p>Nenhuma solicitação encontrada.</p></div>`;
 }
 
 function renderMovements() {
@@ -200,7 +200,7 @@ function renderMovements() {
       <p>Usuario: ${escapeHTML(item.user_name || "Sem usuario")} | ${escapeHTML(item.created_at)}</p>
       <p>${escapeHTML(item.note || "")}</p>
     </article>
-  `).join("") || `<div class="request-card"><p>Nenhuma movimentacao encontrada.</p></div>`;
+  `).join("") || `<div class="request-card"><p>Nenhuma movimentação encontrada.</p></div>`;
 }
 
 function renderUsers() {
@@ -277,7 +277,7 @@ function renderDashboard() {
         <strong>${escapeHTML(part.code)} - ${escapeHTML(part.name)}</strong>
         <span class="badge ${statusOf(part)}">${statusLabel(statusOf(part))}</span>
       </div>
-      <p>Atual: ${escapeHTML(part.quantity)} ${escapeHTML(part.unit)} | Minimo: ${escapeHTML(part.min_quantity)} ${escapeHTML(part.unit)}</p>
+      <p>Atual: ${escapeHTML(part.quantity)} ${escapeHTML(part.unit)} | Mínimo: ${escapeHTML(part.min_quantity)} ${escapeHTML(part.unit)}</p>
       <p>Fornecedor: ${escapeHTML(part.supplier || "Não informado")}</p>
     </article>
   `).join("") || `<div class="request-card"><p>Nenhum item critico no momento.</p></div>`;
@@ -294,7 +294,7 @@ function renderReports() {
       <td>${escapeHTML(Math.max(0, part.min_quantity - part.quantity))} ${escapeHTML(part.unit)}</td>
       <td>${escapeHTML(part.supplier || "-")}</td>
     </tr>
-  `).join("") || `<tr><td colspan="6">Nenhum item abaixo do minimo.</td></tr>`;
+  `).join("") || `<tr><td colspan="6">Nenhum item abaixo do mínimo.</td></tr>`;
 
   const requestTotals = state.requests.reduce((acc, req) => {
     acc[req.status] = (acc[req.status] || 0) + 1;
@@ -322,7 +322,7 @@ function updateView() {
     dashboard: ["Dashboard", "Resumo do estoque e das solicitações da MBF."],
     solicitacoes: ["Solicitações", "Acompanhe pedidos e comentários de alteração."],
     admin: ["Admin peças", "Cadastre, edite e remova peças do estoque da MBF."],
-    usuarios: ["Usuários", "Libere novos cadastros e acompanhe quem ja tem acesso."],
+    usuarios: ["Usuários", "Libere novos cadastros e acompanhe quem já tem acesso."],
     relatorios: ["Relatórios", "Exporte informações e acompanhe indicadores do estoque."],
     historico: ["Histórico", "Veja as movimentações registradas no banco de dados."]
   };
@@ -483,7 +483,7 @@ $("#signupForm").addEventListener("submit", async event => {
       })
     });
     $("#signupDialog").close();
-    $("#signupSuccess").textContent = "Pedido enviado. Aguarde o admin liberar seu cadastro.";
+    $("#signupSuccess").textContent = "Pedido enviado. Aguarde o administrador liberar seu cadastro.";
   } catch (error) {
     $("#signupError").textContent = error.message;
   }
@@ -529,7 +529,7 @@ $("#partForm").addEventListener("submit", async event => {
     $("#supplierCep").focus();
     return;
   }
-  if (validatedSupplierCep !== cep || !$("#supplierAddress").value.trim() || /^(CEP invalido|CEP nao encontrado|Erro ao consultar CEP|Consultando CEP)/i.test($("#supplierAddress").value.trim())) {
+  if (validatedSupplierCep !== cep || !$("#supplierAddress").value.trim() || /^(CEP inv[aá]lido|CEP n[aã]o encontrado|Erro ao consultar CEP|Consultando CEP)/i.test($("#supplierAddress").value.trim())) {
     alert("Aguarde a consulta e confirme um CEP válido antes de salvar.");
     $("#supplierCep").focus();
     return;
@@ -594,7 +594,7 @@ $("#userForm").addEventListener("submit", async event => {
 $("#clearUserForm").addEventListener("click", () => fillUserForm());
 
 $("#exportCritical").addEventListener("click", () => {
-  const rows = [["Codigo", "Peça", "Quantidade", "Mínimo", "Faltam", "Fornecedor"]];
+  const rows = [["Código", "Peça", "Quantidade", "Mínimo", "Faltam", "Fornecedor"]];
   state.parts.filter(part => statusOf(part) !== "ok").forEach(part => {
     rows.push([part.code, part.name, `${part.quantity} ${part.unit}`, `${part.min_quantity} ${part.unit}`, Math.max(0, part.min_quantity - part.quantity), part.supplier || ""]);
   });
@@ -602,7 +602,7 @@ $("#exportCritical").addEventListener("click", () => {
 });
 
 $("#exportAll").addEventListener("click", () => {
-  const rows = [["Codigo", "Peça", "Categoria", "Fornecedor", "Preço", "Setor", "Local", "Quantidade", "Mínimo", "Unidade", "Data entrada"]];
+  const rows = [["Código", "Peça", "Categoria", "Fornecedor", "Preço", "Setor", "Local", "Quantidade", "Mínimo", "Unidade", "Data entrada"]];
   state.parts.forEach(part => {
     rows.push([part.code, part.name, part.category, part.supplier || "", part.unit_price || 0, part.sector || "", part.location, part.quantity, part.min_quantity, part.unit, part.entry_date || ""]);
   });
@@ -651,7 +651,7 @@ if (supplierCepInput && supplierAddressInput) {
 
         if (cep.length !== 8) {
             if (cep.length > 0) {
-                supplierAddressInput.value = "CEP invalido";
+                supplierAddressInput.value = "CEP inválido";
             }
             return;
         }
@@ -671,7 +671,7 @@ if (supplierCepInput && supplierAddressInput) {
             if (supplierCepInput.value.replace(/\D/g, "") !== cep) return;
 
             if (endereco.erro) {
-                supplierAddressInput.value = "CEP nao encontrado";
+                supplierAddressInput.value = "CEP não encontrado";
                 return;
             }
 
