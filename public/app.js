@@ -494,7 +494,7 @@ $("#logoutBtn").addEventListener("click", async () => {
 });
 
 
-$(".nav[data-view]").forEach(btn => {
+$$(".nav[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {
     if (api.user?.role !== "admin" && ["admin", "usuarios"].includes(btn.dataset.view)) return;
     state.view = btn.dataset.view;
