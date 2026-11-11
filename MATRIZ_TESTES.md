@@ -273,3 +273,11 @@ Na execução de 11/11/2026, os 45 testes automatizados foram aprovados, sem fal
 As verificações manuais complementaram os resultados automatizados, demonstrando o comportamento do sistema em situações reais de utilização.
 
 A matriz permite acompanhar a evolução da validação e identificar os cenários que ainda necessitam de confirmação antes da conclusão definitiva do projeto.
+
+## Revisão técnica incremental — 11/11/2026
+
+- Uma cópia local do projeto foi submetida a `python -m unittest discover -q`, com **45 testes aprovados**. Essa execução local não comprova, isoladamente, o estado de todos os arquivos da branch após os commits subsequentes.
+- Foram adicionados `test_frontend_security.py` (cinco verificações estáticas de regressão) e `.github/workflows/validacao.yml` (execução automática de testes Python, verificação de sintaxe JavaScript e análise de XML BPMN). A aprovação dessa nova rotina no GitHub Actions **ainda precisa ser conferida**.
+- A inspeção estática do JavaScript confirmou sintaxe válida após as correções anteriores, mas não substitui um teste completo em navegador.
+- O modelo `docs/processo_retirada.bpmn` existe no repositório; é necessário conferir visualmente o diagrama em editor BPMN e anexar uma figura à monografia.
+- **Critério de aceite:** os 45 testes e a cobertura de código não equivalem à aprovação formal de pelo menos 9 dos 11 requisitos funcionais. Registrar resultado esperado, obtido, evidência e responsável pelo aceite de cada requisito.
