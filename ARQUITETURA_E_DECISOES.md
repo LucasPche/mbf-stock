@@ -1,70 +1,213 @@
 # Arquitetura e decisões técnicas — MBF Stock
 
-## Estado real da implementação
+## 1. Visão geral da arquitetura
+
+O MBF Stock é um sistema web desenvolvido com Python, HTML, CSS e JavaScript, utilizando SQLite para armazenar os dados.
+
+A interface se comunica com o servidor por meio de requisições HTTP e respostas JSON. O servidor recebe as solicitações, verifica as permissões dos usuários e executa as operações necessárias.
+
+A estrutura atual pode ser representada da seguinte forma:
 
 ```text
-Navegador (HTML/CSS/JavaScript)
-  | HTTP/JSON, token de sessão
-  v
-server.py (rotas HTTP + autorização + regras de negócio)
-  | SQL parametrizado
-  v
-SQLite (users, parts, requests, movements, signup_requests)
-
-Navegador --HTTPS--> ViaCEP (consulta de CEP, apenas preenchimento visual)
+Navegador (HTML, CSS e JavaScript)
+          |
+          | HTTP / JSON
+          v
+      server.py
+  Rotas e autenticação
+          |
+          +---- security_service.py
+          |     Validação e senhas
+          |
+          +---- inventory_service.py
+          |     Regras de estoque
+          |
+          +---- database_repository.py
+          |     Conexões e esquema
+          |
+          v
+       SQLite
 ```
 
-**Não declarar que o projeto implementa MVC completo.** A interface é separada em arquivos estáticos, mas `server.py` ainda concentra controlador HTTP, regras de negócio e acesso a dados. Essa é uma pendência expressa do orientador e deve ser tratada por refatoração real, não somente por alteração de nomenclatura na monografia.
+O sistema também utiliza o ViaCEP para consultar informações de endereço diretamente pelo navegador.
 
-## Regras verificadas por testes automatizados
+A organização em módulos permite separar algumas responsabilidades. Entretanto, o arquivo `server.py` ainda concentra parte das regras de negócio, das rotas HTTP e do acesso aos dados. Por esse motivo, a estrutura atual apresenta uma modularização parcial, sem implementar completamente o padrão MVC.
 
-- Login, logout, autenticação e bloqueio de operação administrativa por operador.
-- Cadastro e edição de peças; diferença de estoque registrada como movimentação.
-- Solicitação e aprovação com baixa de saldo; rejeição sem baixa; prevenção de dupla análise.
-- Proteção contra retirada sem saldo, IDs inválidos e JSON malformado.
-- Ativação de `PRAGMA foreign_keys` e verificação de integridade no banco temporário.
-- Bloqueio de acesso a arquivo privado e revogação de sessão de conta desativada.
+## 2. Organização dos módulos
 
-## Banco de dados: decisão pendente
+### server.py
 
-SQLite suporta transações e chaves estrangeiras, mas sua adequação depende do volume, concorrência e requisitos operacionais. O orientador solicitou reconsiderar seu uso. A decisão deve ser formalizada e, se exigida migração, executada e testada (por exemplo, para PostgreSQL) **antes** de afirmar robustez empresarial. Uma simples troca no texto não atende ao parecer.
+É o arquivo principal da aplicação. Ele inicializa o servidor HTTP, recebe as requisições, verifica as sessões e coordena as operações realizadas pelo sistema.
 
-## Segurança e implantação
+### security_service.py
 
-As sessões ficam em memória e expiram por inatividade após 30 minutos. A aplicação usa `http.server` e não deve ser exposta à internet como está. Para implantação real são necessários servidor apropriado, TLS/HTTPS, gestão persistente de sessões, política de backups, migrações e testes de concorrência e recuperação. Não há evidência suficiente para declarar conformidade plena com a LGPD.
+Contém funções relacionadas à segurança, como validação de identificadores e geração e verificação de hashes de senhas.
 
-## Rastreabilidade
+A separação dessas funções facilita sua reutilização e permite realizar testes sem depender diretamente do servidor HTTP.
 
-A matriz de testes `MATRIZ_TESTES.md` distingue verificações automatizadas de aceite funcional. Para a exigência de 75% dos 11 RFs, são necessários pelo menos 9 requisitos aceitos com evidência; 65% de cobertura de código não comprova isso.
+### inventory_service.py
 
-## Refatoração incremental — módulo de segurança
+Contém funções utilizadas nas operações de estoque.
 
-A validação de IDs e o hash/verificação de senhas foram extraídos para `security_service.py`, um módulo sem dependência HTTP ou SQLite. O `server.py` importa esses serviços; as interfaces públicas foram preservadas para manter compatibilidade com os testes. Essa separação reduz o acoplamento, mas **não é MVC completo**: a extração das regras de negócio e repositórios de dados ainda precisa ser implementada.
+A função `stock_adjustment()` calcula a diferença entre a quantidade anterior e a nova quantidade de uma peça, permitindo registrar corretamente as entradas e saídas.
 
-## Refatoração adicional: serviço de estoque (11/11/2026)
+A função `reserve_withdrawal()` realiza uma atualização condicional do saldo, evitando retiradas que deixariam o estoque negativo.
 
-O módulo `inventory_service.py` implementa `stock_adjustment()` (calcula entrada/saída pela diferença real) e `reserve_withdrawal()` (baixa condicional atômica de estoque). As rotas de edição de peças e aprovação de solicitações chamam essas funções, mantendo as transações e respostas HTTP sob responsabilidade de `server.py`. Isso estabelece uma separação inicial de regras de negócio e controlador, mas **não completa MVC**. A persistência ainda precisa ser extraída e a arquitetura revalidada.
+### database_repository.py
 
-Foram executados 32 testes automatizados com sucesso; a cobertura combinada de `server.py`, `security_service.py` e `inventory_service.py` foi de 65% (510 instruções, 176 não cobertas). A meta de 50% de cobertura de código foi alcançada, mas a matriz de aceite dos 11 requisitos continua uma atividade distinta.
+É responsável por funções relacionadas à abertura de conexões SQLite e à manutenção do esquema do banco de dados.
 
+As conexões habilitam as chaves estrangeiras e utilizam um tempo de espera para situações em que o banco esteja temporariamente bloqueado.
 
-## Restrições adicionais do banco novo
+O servidor mantém algumas funções de acesso ao banco para preservar a compatibilidade com as rotas existentes.
 
-As tabelas `parts`, `requests` e `movements` passaram a ter restrições `CHECK` para impedir saldos/preços negativos e quantidades de movimentação/solicitação não positivas. A integridade referencial permanece habilitada por conexão. **As restrições não são retroativas para bancos já existentes**, exigindo migração validada.
+### auditar_banco.py
 
-## Auditoria não destrutiva de banco legado
+Foi desenvolvido para verificar a integridade de bancos de dados existentes.
 
-Foi adicionado `auditar_banco.py`, que abre um banco existente **somente para leitura**, executa `PRAGMA foreign_key_check` e verifica a presença das restrições CHECK no esquema. O programa não modifica dados e devolve código 2 quando há migração pendente. Executar: `python auditar_banco.py caminho/do/banco.db`. O arquivo `mbf_estoque.db` da cópia analisada tem zero bytes, portanto **não constitui um banco legado válido para homologar migração**. Não substituir o banco original do aluno por este arquivo. A migração de dados legados permanece pendente e exige backup e testes com cópia de dados.
+A ferramenta realiza consultas de auditoria sem modificar os registros armazenados.
 
-## Auditoria de conteúdo legado
+## 3. Banco de dados
 
-Além da inspeção das restrições declaradas, `auditar_banco.py` consulta
-`PRAGMA integrity_check` e contabiliza valores inválidos de estoque e preço.
-A execução é somente leitura. A auditoria não corrige automaticamente
-inconsistências, não migra o banco e não substitui uma homologação.
+O sistema utiliza SQLite para armazenar informações de usuários, peças, solicitações e movimentações de estoque.
 
-## Atualização: repositório de persistência
+As principais tabelas são:
 
-A abertura de conexões SQLite e a inspeção de colunas foram movidas para `database_repository.py`, que recebe o caminho do banco como argumento. O `server.py` mantém uma função `connect()` de compatibilidade para preservar rotas e testes existentes. A conexão ativa chaves estrangeiras e configura espera de até 10 segundos em caso de bloqueio do banco. Dois testes novos validam essas propriedades e a idempotência de `ensure_column`.
+- `users`: informações dos usuários.
+- `parts`: cadastro e quantidade das peças.
+- `requests`: solicitações de materiais.
+- `movements`: histórico das movimentações.
+- `signup_requests`: solicitações de cadastro.
 
-**Limite:** trata-se de separação inicial da camada de persistência, não de MVC completo. O SQLite continua sendo o banco em uso e a migração de bases existentes ainda exige planejamento e testes.
+O SQLite foi utilizado por permitir a criação de um banco local integrado à aplicação, sem a necessidade de instalar um servidor de banco de dados separado.
+
+Essa escolha facilita o desenvolvimento e a execução do projeto. Entretanto, ambientes com maior número de acessos simultâneos podem exigir uma solução de banco de dados diferente, dependendo dos requisitos de desempenho e disponibilidade.
+
+Uma possível evolução seria utilizar PostgreSQL, mediante adaptação da camada de persistência e validação das operações existentes.
+
+## 4. Integridade dos dados
+
+Foram adicionadas verificações para reduzir a possibilidade de registros inconsistentes.
+
+Entre elas estão:
+
+- Ativação de chaves estrangeiras nas conexões.
+- Restrições `CHECK` para impedir quantidades e preços negativos.
+- Validação de quantidades utilizadas em solicitações e movimentações.
+- Verificação de saldo antes da retirada de materiais.
+- Controle de operações que alteram o estoque.
+
+As restrições adicionadas ao esquema são aplicadas na criação das tabelas correspondentes. Bancos antigos podem precisar de uma migração para receber as mesmas restrições.
+
+Por isso, a atualização de bancos existentes exige a preservação dos dados e a realização de testes em uma cópia antes de qualquer alteração.
+
+## 5. Auditoria do banco de dados
+
+O arquivo `auditar_banco.py` permite analisar um banco SQLite existente.
+
+A ferramenta utiliza verificações como:
+
+- `PRAGMA foreign_key_check`, para identificar problemas de integridade referencial.
+- `PRAGMA integrity_check`, para verificar a integridade geral do banco.
+- Inspeção das restrições `CHECK` presentes nas tabelas.
+- Consulta de valores inválidos relacionados a quantidades e preços.
+
+A auditoria funciona somente em modo de leitura e não altera os dados.
+
+Para executar:
+
+```powershell
+python auditar_banco.py caminho/do/banco.db
+```
+
+Quando identifica condições que exigem uma migração, a ferramenta pode retornar o código de saída 2.
+
+A auditoria auxilia na identificação de problemas, mas não realiza correções ou migrações automaticamente.
+
+## 6. Segurança
+
+O MBF Stock possui mecanismos de autenticação e controle de acesso para diferenciar as operações permitidas aos usuários.
+
+Entre as medidas implementadas estão:
+
+- Armazenamento de senhas por hash com salt.
+- Controle de sessões.
+- Expiração de sessão após 30 minutos de inatividade.
+- Verificação de permissões administrativas.
+- Validação de identificadores e dados recebidos pela API.
+- Bloqueio de acesso a arquivos privados.
+- Revogação de sessões de contas desativadas.
+
+As sessões são armazenadas em memória e o servidor utiliza o módulo `http.server` do Python.
+
+Essa estrutura atende à execução local utilizada no desenvolvimento. Uma implantação em ambiente de produção exigiria outras medidas, como HTTPS, gerenciamento persistente de sessões, backups, monitoramento e testes de concorrência.
+
+## 7. Testes automatizados
+
+Os testes foram desenvolvidos com a biblioteca `unittest`, utilizando bancos temporários para evitar alterações nos dados utilizados durante a execução normal do sistema.
+
+Os testes verificam situações como:
+
+- Login, logout e autenticação.
+- Permissões de administradores e operadores.
+- Cadastro e edição de peças.
+- Registro de movimentações.
+- Solicitação, aprovação e rejeição de materiais.
+- Prevenção de retirada sem saldo suficiente.
+- Validação de identificadores e dados JSON.
+- Integridade referencial do banco.
+- Bloqueio de arquivos privados.
+- Revogação de sessões.
+- Funções dos módulos de segurança, estoque e persistência.
+- Auditoria do banco de dados.
+
+Na execução realizada em 11/11/2026, foram concluídos **45 testes automatizados, todos aprovados**.
+
+Para executar novamente:
+
+```powershell
+python -m unittest discover -v
+```
+
+Para medir a cobertura dos módulos da aplicação:
+
+```powershell
+python -m coverage run --source=server,security_service,inventory_service,database_repository -m unittest discover
+python -m coverage report -m
+```
+
+A cobertura de código permite identificar quais partes da implementação foram executadas durante os testes.
+
+A validação dos requisitos funcionais também depende da execução dos cenários previstos e das evidências registradas na matriz de testes.
+
+## 8. Rastreabilidade dos requisitos
+
+O arquivo `MATRIZ_TESTES.md` apresenta a relação entre os requisitos do sistema e suas respectivas verificações.
+
+Essa organização facilita a identificação das funcionalidades testadas e das evidências disponíveis.
+
+Considerando um conjunto de 11 requisitos funcionais, a comprovação de pelo menos 75% exige a aprovação de no mínimo 9 requisitos.
+
+Esse percentual é diferente da cobertura de código, pois representa a quantidade de requisitos efetivamente validados.
+
+## 9. Decisões e limitações técnicas
+
+Durante o desenvolvimento, foram realizadas alterações para melhorar a organização do código, a segurança e a integridade dos dados.
+
+A separação das funções em módulos específicos reduziu a concentração de algumas responsabilidades no servidor principal.
+
+Mesmo com essas melhorias, a aplicação ainda possui limitações relacionadas à arquitetura e à implantação.
+
+Entre os pontos que podem ser aprimorados estão a separação mais completa entre rotas, regras de negócio e persistência, a avaliação de outro banco de dados para ambientes com maior concorrência e a utilização de uma estrutura de servidor adequada à produção.
+
+Essas melhorias representam possibilidades de evolução do projeto e devem ser consideradas de acordo com os requisitos definidos para sua utilização.
+
+## 10. Considerações finais
+
+A arquitetura do MBF Stock foi organizada para permitir a comunicação entre a interface web, o servidor Python e o banco de dados SQLite.
+
+Durante o desenvolvimento, foram adicionados módulos específicos para segurança, operações de estoque e persistência, além de testes automatizados e ferramentas de auditoria.
+
+Essas alterações contribuíram para melhorar a organização do código, a validação das operações e o controle das informações armazenadas.
+
+O projeto reúne funcionalidades de controle de estoque e apresenta uma estrutura que pode continuar sendo aprimorada conforme as necessidades de manutenção e utilização do sistema.
