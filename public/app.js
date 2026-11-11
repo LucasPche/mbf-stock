@@ -59,7 +59,13 @@ function money(value) {
 }
 
 function csvDownload(filename, rows) {
-  const csv = rows.map(row => row.map(value => `"${String(value ?? "").replaceAll('"', '""')}"`).join(";")).join("\n");
+  const safeCSV = value => {
+    let text = String(value ?? "");
+    if (/^\\s*[=+@\\-\\t\\r]/.test(text)) text = "\'" + text;
+    return `"${text.replaceAll('"', '""')}"`;
+  };
+  const csv = rows.map(row => row.map(safeCSV).join(";")).join("
+");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -255,7 +261,7 @@ function renderDashboard() {
   const maxCategory = Math.max(1, ...Object.values(categoryTotals));
   $("#categoryChart").innerHTML = Object.entries(categoryTotals).map(([category, total]) => `
     <div class="chart-row">
-      <header><strong>${category}</strong><span>${total}</span></header>
+      <header><strong>${escapeHTML(category)}</strong><span>${total}</span></header>
       <div class="bar"><span style="--w:${Math.round((total / maxCategory) * 100)}%"></span></div>
     </div>
   `).join("") || `<p>Nenhuma peca cadastrada.</p>`;
@@ -264,11 +270,11 @@ function renderDashboard() {
   $("#criticalList").innerHTML = critical.map(part => `
     <article class="request-card">
       <div class="row-actions">
-        <strong>${part.code} - ${part.name}</strong>
+        <strong>${escapeHTML(part.code)} - ${escapeHTML(part.name)}</strong>
         <span class="badge ${statusOf(part)}">${statusLabel(statusOf(part))}</span>
       </div>
-      <p>Atual: ${part.quantity} ${part.unit} | Minimo: ${part.min_quantity} ${part.unit}</p>
-      <p>Fornecedor: ${part.supplier || "Nao informado"}</p>
+      <p>Atual: ${escapeHTML(part.quantity)} ${escapeHTML(part.unit)} | Minimo: ${escapeHTML(part.min_quantity)} ${escapeHTML(part.unit)}</p>
+      <p>Fornecedor: ${escapeHTML(part.supplier || "Nao informado")}</p>
     </article>
   `).join("") || `<div class="request-card"><p>Nenhum item critico no momento.</p></div>`;
 }
@@ -277,12 +283,12 @@ function renderReports() {
   const critical = state.parts.filter(part => statusOf(part) !== "ok");
   $("#criticalReport").innerHTML = critical.map(part => `
     <tr>
-      <td><strong>${part.code}</strong></td>
-      <td>${part.name}</td>
-      <td>${part.quantity} ${part.unit}</td>
-      <td>${part.min_quantity} ${part.unit}</td>
-      <td>${Math.max(0, part.min_quantity - part.quantity)} ${part.unit}</td>
-      <td>${part.supplier || "-"}</td>
+      <td><strong>${escapeHTML(part.code)}</strong></td>
+      <td>${escapeHTML(part.name)}</td>
+      <td>${escapeHTML(part.quantity)} ${escapeHTML(part.unit)}</td>
+      <td>${escapeHTML(part.min_quantity)} ${escapeHTML(part.unit)}</td>
+      <td>${escapeHTML(Math.max(0, part.min_quantity - part.quantity))} ${escapeHTML(part.unit)}</td>
+      <td>${escapeHTML(part.supplier || "-")}</td>
     </tr>
   `).join("") || `<tr><td colspan="6">Nenhum item abaixo do minimo.</td></tr>`;
 
