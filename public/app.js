@@ -548,12 +548,22 @@ $("#partForm").addEventListener("submit", async event => {
     entry_date: $("#partEntryDate").value,
     description: $("#partDescription").value
   };
-  await request(id ? `/api/parts/${id}` : "/api/parts", {
-    method: id ? "PUT" : "POST",
-    body: JSON.stringify(part)
-  });
-  fillForm();
-  await loadAll();
+  const saveButton = event.submitter;
+  if (saveButton) saveButton.disabled = true;
+  try {
+    await request(id ? `/api/parts/${id}` : "/api/parts", {
+      method: id ? "PUT" : "POST",
+      body: JSON.stringify(part)
+    });
+    fillForm();
+    await loadAll();
+    alert(id ? "Peça atualizada com sucesso." : "Peça cadastrada com sucesso.");
+  } catch (error) {
+    console.error("Erro ao salvar peça:", error);
+    alert("Não foi possível salvar a peça: " + error.message);
+  } finally {
+    if (saveButton) saveButton.disabled = false;
+  }
 });
 
 $("#clearForm").addEventListener("click", () => fillForm());
