@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -11,11 +11,11 @@
     <div class="login-brand">
       <img class="logo-img" src="img/Camada_1-1.png" alt="Logo MBF">
       <h1>Controle de Estoque</h1>
-      <p>Sistema interno para consulta, solicitacao e administracao de pecas.</p>
+      <p>Sistema interno para consulta, solicita├º├úo e administracao de pe├ºas.</p>
     </div>
     <form class="login-card" id="loginForm">
       <h2>Entrar</h2>
-      <label>Usuario
+      <label>Usu├írio
         <input id="username" autocomplete="username" required placeholder="admin ou operador">
       </label>
       <label>Senha
@@ -39,11 +39,11 @@
       </div>
       <button class="nav active" data-view="dashboard">Dashboard</button>
       <button class="nav" data-view="estoque">Estoque</button>
-      <button class="nav" data-view="solicitacoes">Solicitacoes</button>
-      <button class="nav admin-only" data-view="admin">Admin pecas</button>
-      <button class="nav admin-only" data-view="usuarios">Usuarios</button>
-      <button class="nav admin-only" data-view="relatorios">Relatorios</button>
-      <button class="nav admin-only" data-view="historico">Historico</button>
+      <button class="nav" data-view="solicitacoes">Solicita├º├Áes</button>
+      <button class="nav admin-only" data-view="admin">Admin pe├ºas</button>
+      <button class="nav admin-only" data-view="usuarios">Usu├írios</button>
+      <button class="nav admin-only" data-view="relatorios">Relat├│rios</button>
+      <button class="nav admin-only" data-view="historico">Hist├│rico</button>
       <button class="nav muted" id="logoutBtn">Sair</button>
     </aside>
 
@@ -51,17 +51,17 @@
       <header class="topbar">
         <div>
           <h2 id="pageTitle">Dashboard</h2>
-          <p id="pageSubtitle">Resumo do estoque e das solicitacoes da MBF.</p>
+          <p id="pageSubtitle">Resumo do estoque e das solicita├º├Áes da MBF.</p>
         </div>
         <div class="search">
-          <input id="searchInput" placeholder="Buscar peca, codigo ou local">
+          <input id="searchInput" placeholder="Buscar pe├ºa, codigo ou local">
         </div>
       </header>
 
       <section class="metrics">
-        <article><span>Pecas cadastradas</span><strong id="metricParts">0</strong></article>
+        <article><span>Pe├ºas cadastradas</span><strong id="metricParts">0</strong></article>
         <article><span>Abaixo do minimo</span><strong id="metricLow">0</strong></article>
-        <article><span>Solicitacoes pendentes</span><strong id="metricPending">0</strong></article>
+        <article><span>Solicita├º├Áes pendentes</span><strong id="metricPending">0</strong></article>
         <article class="admin-only"><span>Cadastros pendentes</span><strong id="metricSignup">0</strong></article>
       </section>
 
@@ -100,12 +100,12 @@
       <section id="estoqueView" class="view hidden">
         <div class="panel">
           <div class="panel-head">
-            <h3>Pecas no estoque</h3>
+            <h3>Pe├ºas no estoque</h3>
             <select id="categoryFilter">
               <option value="">Todas as categorias</option>
-              <option>Aço</option>
+              <option>A├ºo</option>
               <option>Consumivel</option>
-              <option>Peca</option>
+              <option value="Peca">Pe├ºa</option>
               <option>Ferramenta</option>
               <option>Outro</option>
             </select>
@@ -114,8 +114,8 @@
             <table>
               <thead>
                 <tr>
-                  <th>Codigo</th>
-                  <th>Peca</th>
+                  <th>C├│digo</th>
+                  <th>Pe├ºa</th>
                   <th>Categoria</th>
                   <th>Fornecedor</th>
                   <th>Local</th>
@@ -133,7 +133,7 @@
       <section id="solicitacoesView" class="view hidden">
         <div class="panel">
           <div class="panel-head">
-            <h3>Solicitacoes</h3>
+            <h3>Solicita├º├Áes</h3>
             <span>Acompanhe os pedidos feitos pelos usuarios.</span>
           </div>
           <div class="request-list" id="requestsList"></div>
@@ -144,24 +144,24 @@
         <div class="grid-2">
           <form class="panel form" id="partForm">
             <div class="panel-head flat">
-              <h3 id="formTitle">Cadastrar peca</h3>
+              <h3 id="formTitle">Cadastrar pe├ºa</h3>
               <button class="secondary" type="button" id="clearForm">Limpar</button>
             </div>
             <input type="hidden" id="partId">
-            <label>Codigo <input id="partCode" required></label>
-            <label>Nome da peca <input id="partName" required></label>
+            <label>C├│digo <input id="partCode" required></label>
+            <label>Nome da pe├ºa <input id="partName" required></label>
             <label>Categoria
               <select id="partCategory">
-                <option>Aço</option>
+                <option>A├ºo</option>
                 <option>Consumivel</option>
-                <option>Peca</option>
+                <option value="Peca">Pe├ºa</option>
                 <option>Ferramenta</option>
                 <option>Outro</option>
               </select>
             </label>
             <div class="two">
               <label>Quantidade <input id="partQuantity" type="number" min="0" required></label>
-              <label>Minimo <input id="partMin" type="number" min="0" required></label>
+              <label>M├¡nimo <input id="partMin" type="number" min="0" required></label>
             </div>
             <div class="two">
               <label>Unidade <input id="partUnit" required placeholder="un, kg, barra"></label>
@@ -169,17 +169,17 @@
             </div>
             <div class="two">
               <label>Fornecedor <input id="partSupplier" placeholder="Fornecedor principal"></label>
-              <label>Preco unitario <input id="partUnitPrice" type="number" min="0" step="0.01" placeholder="0.00"></label>
+              <label>Pre├ºo unitario <input id="partUnitPrice" type="number" min="0" step="0.01" placeholder="0.00"></label>
             </div>
             
             <div class="two">
               <label>CEP do fornecedor
-               <input id="supplierCep" type="text" maxlength="9"
+               <input id="supplierCep" type="text" maxlength="9" required inputmode="numeric" pattern="[0-9]{5}-?[0-9]{3}" title="Informe um CEP de 8 d├¡gitos"
                placeholder="00000-000">
               </label>
-                <label>Endereco do fornecedor
+                <label>Endere├ºo do fornecedor
                 <input id="supplierAddress" type="text"
-               placeholder="Endereco consultado pelo CEP" readonly>
+               placeholder="Endere├ºo consultado pelo CEP" readonly>
               </label>
             </div>
 
@@ -187,18 +187,18 @@
               <label>Setor de uso <input id="partSector" placeholder="Corte, Solda, Manutencao"></label>
               <label>Data de entrada <input id="partEntryDate" type="date"></label>
             </div>
-            <label>Descricao <textarea id="partDescription" rows="3"></textarea></label>
-            <button type="submit">Salvar peca</button>
+            <label>Descri├º├úo <textarea id="partDescription" rows="3"></textarea></label>
+            <button type="submit">Salvar pe├ºa</button>
           </form>
 
           <div class="panel">
             <div class="panel-head">
               <h3>Funcoes de admin</h3>
-              <span>Cadastre, edite e exclua pecas. Ao aprovar uma solicitacao, o estoque baixa automaticamente.</span>
+              <span>Cadastre, edite e exclua pe├ºas. Ao aprovar uma solicita├º├úo, o estoque baixa automaticamente.</span>
             </div>
             <div class="admin-note">
               <strong>CRUD do estoque</strong>
-              <p>Create: cadastrar peca. Read: listar pecas. Update: editar cadastro. Delete: excluir peca.</p>
+              <p>Create: cadastrar pe├ºa. Read: listar pe├ºas. Update: editar cadastro. Delete: excluir pe├ºa.</p>
             </div>
           </div>
         </div>
@@ -207,7 +207,7 @@
       <section id="historicoView" class="view hidden">
         <div class="panel">
           <div class="panel-head">
-            <h3>Historico de movimentacoes</h3>
+            <h3>Hist├│rico de movimenta├º├Áes</h3>
             <span>Registro das acoes feitas no estoque.</span>
           </div>
           <div class="request-list" id="movementsList"></div>
@@ -227,7 +227,7 @@
             <div class="two">
               <label>Perfil
                 <select id="userRole">
-                  <option value="user">Usuario comum</option>
+                  <option value="user">Usu├írio comum</option>
                   <option value="admin">Administrador</option>
                 </select>
               </label>
@@ -238,7 +238,7 @@
                 </select>
               </label>
             </div>
-            <label>Setor <input id="userSector" placeholder="Administracao, Corte, Solda..."></label>
+            <label>Setor <input id="userSector" placeholder="Administra├º├úo, Corte, Solda..."></label>
             <label>Nova senha <input id="userPassword" type="password" placeholder="Deixe vazio para manter"></label>
             <button type="submit">Salvar usuario</button>
           </form>
@@ -253,7 +253,7 @@
 
           <div class="panel">
             <div class="panel-head">
-              <h3>Usuarios liberados</h3>
+              <h3>Usu├írios liberados</h3>
               <span>Pessoas que ja conseguem entrar no sistema.</span>
             </div>
             <div class="request-list" id="usersList"></div>
@@ -265,17 +265,17 @@
         <div class="dashboard-grid">
           <div class="panel wide">
             <div class="panel-head">
-              <h3>Relatorio de estoque minimo</h3>
+              <h3>Relat├│rio de estoque minimo</h3>
               <button type="button" id="exportCritical">Exportar CSV</button>
             </div>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Codigo</th>
-                    <th>Peca</th>
+                    <th>C├│digo</th>
+                    <th>Pe├ºa</th>
                     <th>Qtd.</th>
-                    <th>Minimo</th>
+                    <th>M├¡nimo</th>
                     <th>Faltam</th>
                     <th>Fornecedor</th>
                   </tr>
@@ -287,7 +287,7 @@
 
           <div class="panel">
             <div class="panel-head">
-              <h3>Solicitacoes por status</h3>
+              <h3>Solicita├º├Áes por status</h3>
               <span>Controle para apresentacao</span>
             </div>
             <div class="chart-list" id="requestChart"></div>
@@ -295,17 +295,12 @@
 
           <div class="panel">
             <div class="panel-head">
-              <h3>Relatorio geral</h3>
+              <h3>Relat├│rio geral</h3>
               <button type="button" id="exportAll">Exportar estoque</button>
             </div>
             <div class="admin-note">
-              <strong>Relatório Geral do Estoque</strong>
-              <p>Consulte e exporte as informações das peças cadastradas,
-              incluindo códigos, quantidades disponíveis, valores e
-              fornecedores. Esses dados auxiliam no acompanhamento
-              do estoque e na tomada de decisões sobre reposição
-              de materiais.
-              </p>
+              <strong>Relat├│rio Geral do Estoque</strong>
+              <p>Consulte e exporte as informa├º├Áes das pe├ºas cadastradas, incluindo c├│digos, quantidades dispon├¡veis, valores e fornecedores. Esses dados auxiliam no acompanhamento do estoque e na tomada de decis├Áes sobre reposi├º├úo de materiais.</p>
             </div>
           </div>
         </div>
@@ -319,7 +314,7 @@
       <label>Nome completo
         <input id="signupName" required placeholder="Seu nome">
       </label>
-      <label>Usuario para login
+      <label>Usu├írio para login
         <input id="signupUsername" required placeholder="ex.: lucas">
       </label>
       <label>Senha
@@ -341,7 +336,7 @@
 
   <dialog id="requestDialog">
     <form method="dialog" class="modal" id="requestForm">
-      <h3>Solicitar peca</h3>
+      <h3>Solicitar pe├ºa</h3>
       <input type="hidden" id="requestPartId">
       <strong id="requestPartName"></strong>
       <label>Quantidade
@@ -352,7 +347,7 @@
       </label>
       <div class="modal-actions">
         <button class="secondary" value="cancel" type="button" id="cancelRequest">Cancelar</button>
-        <button type="submit">Enviar solicitacao</button>
+        <button type="submit">Enviar solicita├º├úo</button>
       </div>
     </form>
   </dialog>
@@ -366,7 +361,7 @@
     <p>
         O MBF Estoque utiliza dados pessoais para identificar
         usuarios, controlar o acesso ao sistema e registrar
-        movimentacoes de materiais.
+        movimenta├º├Áes de materiais.
     </p>
 
     <h3>Dados utilizados</h3>
@@ -391,7 +386,7 @@
 
     <h3>Direitos dos usuarios</h3>
     <p>
-        Os usuarios podem solicitar informacoes e correcoes
+        Os usuarios podem solicitar informa├º├Áes e correcoes
         sobre seus dados pessoais ao responsavel pelo sistema.
     </p>
 
