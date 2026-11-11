@@ -141,8 +141,8 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
-                ("MBF-001", "Chapa A36 3/16", "Acao", "Rua A / Box 02", 84, 40, "chapa", "Fornecedor A", 248.90, "Corte", "2026-07-01", "Chapa para corte e dobra"),
-                ("MBF-002", "Barra redonda 1045 1 pol", "Acao", "Rua A / Rack 05", 18, 25, "barra", "Fornecedor B", 96.40, "Usinagem", "2026-07-02", "Uso em usinagem"),
+                ("MBF-001", "Chapa A36 3/16", "Aço", "Rua A / Box 02", 84, 40, "chapa", "Fornecedor A", 248.90, "Corte", "2026-07-01", "Chapa para corte e dobra"),
+                ("MBF-002", "Barra redonda 1045 1 pol", "Aço", "Rua A / Rack 05", 18, 25, "barra", "Fornecedor B", 96.40, "Usinagem", "2026-07-02", "Uso em usinagem"),
                 ("MBF-003", "Eletrodo E7018 3,25 mm", "Consumivel", "Almoxarifado solda", 12, 20, "kg", "Fornecedor C", 22.70, "Solda", "2026-07-03", "Consumivel de solda"),
                 ("MBF-004", "Disco de corte 7 pol", "Consumivel", "Almoxarifado corte", 73, 35, "un", "Fornecedor C", 7.80, "Corte", "2026-07-04", "Disco para esmerilhadeira"),
                 ("MBF-005", "Rolamento 6205 ZZ", "Peca", "Gaveta 12", 9, 10, "un", "Fornecedor D", 18.10, "Manutencao", "2026-07-05", "Reposicao mecanica"),
