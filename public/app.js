@@ -341,6 +341,9 @@ function fillForm(part = null) {
   $("#partSector").value = part?.sector || "";
   $("#partEntryDate").value = part?.entry_date || "";
   $("#partDescription").value = part?.description || "";
+  // O CEP não é persistido no cadastro atual; exigir nova informação ao salvar.
+  $("#supplierCep").value = "";
+  $("#supplierAddress").value = "";
   $("#formTitle").textContent = part ? "Editar peca" : "Cadastrar peca";
 }
 
@@ -364,8 +367,12 @@ window.editPart = id => {
 
 window.deletePart = async id => {
   if (!confirm("Excluir esta peca do estoque?")) return;
-  await request(`/api/parts/${id}`, { method: "DELETE" });
-  await loadAll();
+  try {
+    await request(`/api/parts/${id}`, { method: "DELETE" });
+    await loadAll();
+  } catch (error) {
+    alert(error.message + "\\n\\nPeças com solicitações ou movimentações não podem ser excluídas, pois seus registros precisam ser preservados para auditoria.");
+  }
 };
 
 window.openRequest = id => {
@@ -492,6 +499,17 @@ $("#categoryFilter").addEventListener("change", renderParts);
 
 $("#partForm").addEventListener("submit", async event => {
   event.preventDefault();
+  const cep = $("#supplierCep").value.replace(/\\D/g, "");
+  if (cep.length !== 8) {
+    alert("Informe o CEP do fornecedor com 8 dígitos antes de salvar.");
+    $("#supplierCep").focus();
+    return;
+  }
+  if (!$("#supplierAddress").value.trim() || /^(CEP invalido|CEP nao encontrado|Erro ao consultar CEP|Consultando CEP)/i.test($("#supplierAddress").value.trim())) {
+    alert("Aguarde a consulta e confirme um CEP válido antes de salvar.");
+    $("#supplierCep").focus();
+    return;
+  }
   const id = $("#partId").value;
   const part = {
     code: $("#partCode").value,
