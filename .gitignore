@@ -17,3 +17,7 @@ __pycache__/
 venv/
 # Arquivos de auditoria
 *.log
+# Arquivos gerados pelos testes de cobertura
+.coverage
+.coverage.*
+htmlcov/

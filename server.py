@@ -1,6 +1,5 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-import hashlib
 import json
 import secrets
 import sqlite3
@@ -9,6 +8,9 @@ import os
 import logging
 import time
 import math
+from security_service import validar_id, password_hash, check_password
+from inventory_service import stock_adjustment, reserve_withdrawal
+from database_repository import open_connection, ensure_column
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
@@ -30,36 +32,9 @@ def registrar_log(acao, usuario="sistema", detalhes=""):
         acao,
         detalhes
     )
-def validar_id(valor):
-    try:
-        numero = int(valor)
-        if numero <= 0:
-            return None
-        return numero
-    except (ValueError, TypeError, OverflowError):
-        return None
 def connect():
-    con = sqlite3.connect(DB)
-    con.execute("PRAGMA foreign_keys = ON")
-    con.row_factory = sqlite3.Row
-    return con
-
-
-def password_hash(password, salt=None):
-    salt = salt or secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 120000).hex()
-    return f"{salt}${digest}"
-
-
-def check_password(password, stored):
-    salt, digest = stored.split("$", 1)
-    return password_hash(password, salt).split("$", 1)[1] == digest
-
-
-def ensure_column(cur, table, column, definition):
-    columns = [row["name"] for row in cur.execute(f"PRAGMA table_info({table})").fetchall()]
-    if column not in columns:
-        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+    """Compatibilidade com chamadas existentes; acesso físico fica no repositório."""
+    return open_connection(DB)
 
 
 def init_db():
@@ -83,11 +58,11 @@ def init_db():
             name TEXT NOT NULL,
             category TEXT NOT NULL,
             location TEXT NOT NULL,
-            quantity INTEGER NOT NULL DEFAULT 0,
-            min_quantity INTEGER NOT NULL DEFAULT 0,
+            quantity INTEGER NOT NULL DEFAULT 0 CHECK(quantity >= 0),
+            min_quantity INTEGER NOT NULL DEFAULT 0 CHECK(min_quantity >= 0),
             unit TEXT NOT NULL DEFAULT 'un',
             supplier TEXT DEFAULT '',
-            unit_price REAL NOT NULL DEFAULT 0,
+            unit_price REAL NOT NULL DEFAULT 0 CHECK(unit_price >= 0),
             sector TEXT DEFAULT '',
             entry_date TEXT DEFAULT '',
             description TEXT DEFAULT ''
@@ -97,7 +72,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             part_id INTEGER NOT NULL,
-            quantity INTEGER NOT NULL,
+            quantity INTEGER NOT NULL CHECK(quantity > 0),
             comment TEXT DEFAULT '',
             status TEXT NOT NULL DEFAULT 'pendente',
             admin_note TEXT DEFAULT '',
@@ -111,7 +86,7 @@ def init_db():
             part_id INTEGER,
             user_id INTEGER,
             type TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
+            quantity INTEGER NOT NULL CHECK(quantity > 0),
             note TEXT DEFAULT '',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(part_id) REFERENCES parts(id),
@@ -183,24 +158,38 @@ def row_dict(row):
 
 class Handler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
-        path = urllib.parse.urlparse(path).path
-        if path == "/":
-            path = "/index.html"
-        return str(PUBLIC / path.lstrip("/"))
+        """Serve apenas arquivos públicos, sem permitir escapar do diretório web."""
+        requested = urllib.parse.unquote(urllib.parse.urlparse(path).path)
+        if requested == "/":
+            requested = "/index.html"
+        destination = (PUBLIC / requested.lstrip("/")).resolve()
+        if not destination.is_relative_to(PUBLIC.resolve()):
+            return str(PUBLIC / "__not_found__")
+        return str(destination)
 
     def send_json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
     def read_json(self):
-        length = int(self.headers.get("Content-Length", "0"))
-        if length == 0:
-            return {}
-        return json.loads(self.rfile.read(length).decode("utf-8"))
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if length < 0 or length > 1024 * 1024:
+                raise ValueError("Tamanho de requisicao invalido")
+            if length == 0:
+                return {}
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            if not isinstance(data, dict):
+                raise ValueError("O corpo deve ser um objeto JSON")
+            return data
+        except (ValueError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError("JSON invalido ou requisicao muito grande") from exc
 
     
    
@@ -226,8 +215,20 @@ class Handler(SimpleHTTPRequestHandler):
             )
             return None
 
+        # Verifica a conta no banco: bloqueio ou alteração de perfil revoga o acesso.
+        con = connect()
+        try:
+            current = con.execute(
+                "SELECT id, name, username, role, sector, active FROM users WHERE id = ?",
+                (session["user"]["id"],),
+            ).fetchone()
+        finally:
+            con.close()
+        if current is None or not current["active"] or current["role"] != session["user"]["role"]:
+            SESSIONS.pop(token, None)
+            return None
         session["last_activity"] = now
-        return session["user"]
+        return dict(current)
 
 
 
@@ -256,10 +257,16 @@ class Handler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        self.handle_api_post(urllib.parse.urlparse(self.path).path)
+        try:
+            self.handle_api_post(urllib.parse.urlparse(self.path).path)
+        except ValueError:
+            self.send_json({"error": "JSON invalido ou requisicao muito grande"}, 400)
 
     def do_PUT(self):
-        self.handle_api_put(urllib.parse.urlparse(self.path).path)
+        try:
+            self.handle_api_put(urllib.parse.urlparse(self.path).path)
+        except ValueError:
+            self.send_json({"error": "JSON invalido ou requisicao muito grande"}, 400)
 
     def do_DELETE(self):
         self.handle_api_delete(urllib.parse.urlparse(self.path).path)
@@ -575,7 +582,7 @@ class Handler(SimpleHTTPRequestHandler):
                 con.close()
                 self.send_json({"error": "Estoque minimo deve ser um inteiro maior ou igual a zero"}, 400)
                 return
-            diferenca = quantidade_nova - quantidade_anterior
+            ajuste = stock_adjustment(quantidade_anterior, quantidade_nova)
             cur.execute(
                 """
                 UPDATE parts
@@ -599,14 +606,14 @@ class Handler(SimpleHTTPRequestHandler):
                     part_id,
                 ),
             )
-            if diferenca != 0:
+            if ajuste is not None:
                 cur.execute(
                     "INSERT INTO movements (part_id, user_id, type, quantity, note) VALUES (?, ?, ?, ?, ?)",
              (
                 part_id,
                 user["id"],
-                "entrada" if diferenca > 0 else "saida",
-                abs(diferenca),
+                ajuste[0],
+                ajuste[1],
                 "Ajuste de estoque por edicao"
             )
         )
@@ -618,14 +625,18 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/users/"):
             target_id = validar_id(path.rsplit("/", 1)[1])
 
-        if target_id is None:
-            con.close()
-            self.send_json({"error": "ID do usuario invalido"}, 400)
-            return
+            if target_id is None:
+                con.close()
+                self.send_json({"error": "ID do usuario invalido"}, 400)
+                return
             target = cur.execute("SELECT * FROM users WHERE id = ?", (target_id,)).fetchone()
             if not target:
                 con.close()
                 self.send_json({"error": "Usuario nao encontrado"}, 404)
+                return
+            if data.get("role", "user") not in ("admin", "user") or data.get("active", 1) not in (0, 1, "0", "1"):
+                con.close()
+                self.send_json({"error": "Perfil ou estado invalido"}, 400)
                 return
             if target["id"] == user["id"] and int(data.get("active", 1)) == 0:
                 con.close()
@@ -666,10 +677,10 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/requests/"):
             request_id = validar_id(path.rsplit("/", 1)[1])
 
-        if request_id is None:
-            con.close()
-            self.send_json({"error": "ID da solicitacao invalido"}, 400)
-            return
+            if request_id is None:
+                con.close()
+                self.send_json({"error": "ID da solicitacao invalido"}, 400)
+                return
             status = data.get("status")
             if status not in ("aprovado", "rejeitado"):
                 con.close()
@@ -685,12 +696,12 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "Solicitacao ja foi analisada"}, 400)
                 return
             if status == "aprovado":
-                part = cur.execute("SELECT * FROM parts WHERE id = ?", (req["part_id"],)).fetchone()
-                if part["quantity"] < req["quantity"]:
+                # Atualização condicional impede saldo negativo mesmo sob concorrência.
+                if not reserve_withdrawal(cur, req["part_id"], req["quantity"]):
+                    con.rollback()
                     con.close()
-                    self.send_json({"error": "Estoque insuficiente"}, 400)
+                    self.send_json({"error": "Estoque insuficiente ou peca inexistente"}, 400)
                     return
-                cur.execute("UPDATE parts SET quantity = quantity - ? WHERE id = ?", (req["quantity"], req["part_id"]))
                 cur.execute(
                     "INSERT INTO movements (part_id, user_id, type, quantity, note) VALUES (?, ?, ?, ?, ?)",
                     (req["part_id"], user["id"], "saida", req["quantity"], f"Solicitacao #{request_id} aprovada"),
@@ -710,7 +721,11 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path.startswith("/api/signup-requests/"):
-            signup_id = int(path.rsplit("/", 1)[1])
+            signup_id = validar_id(path.rsplit("/", 1)[1])
+            if signup_id is None:
+                con.close()
+                self.send_json({"error": "ID do cadastro invalido"}, 400)
+                return
             status = data.get("status")
             if status not in ("aprovado", "rejeitado"):
                 con.close()
@@ -787,7 +802,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"ok": True})
             return
         if path.startswith("/api/users/"):
-            target_id = int(path.rsplit("/", 1)[1])
+            target_id = validar_id(path.rsplit("/", 1)[1])
+            if target_id is None:
+                self.send_json({"error": "ID do usuario invalido"}, 400)
+                return
             if target_id == user["id"]:
                 self.send_json({"error": "Voce nao pode excluir seu proprio usuario"}, 400)
                 return
