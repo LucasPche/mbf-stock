@@ -194,7 +194,7 @@ function renderRequests() {
 function renderMovements() {
   $("#movementsList").innerHTML = state.movements.map(item => `
     <article class="request-card">
-      <strong>${escapeHTML(String(item.type || "").toUpperCase())} - ${escapeHTML(item.part_name || "Sistema")}</strong>
+      <strong>${escapeHTML(String(item.type || "").toUpperCase())} - ${escapeHTML(item.part_name || "Sistema")}${item.part_deleted_at ? " (excluída)" : ""}</strong>
       <p>Quantidade: ${escapeHTML(item.quantity)}</p>
       <p>Usuario: ${escapeHTML(item.user_name || "Sem usuario")} | ${escapeHTML(item.created_at)}</p>
       <p>${escapeHTML(item.note || "")}</p>
@@ -373,12 +373,12 @@ window.editPart = id => {
 };
 
 window.deletePart = async id => {
-  if (!confirm("Excluir esta peça do estoque?")) return;
+  if (!confirm("Excluir esta peça do estoque? O histórico será preservado e as solicitações pendentes serão rejeitadas.")) return;
   try {
     await request(`/api/parts/${id}`, { method: "DELETE" });
     await loadAll();
   } catch (error) {
-    alert(error.message + "\n\nPeças com solicitações ou movimentações não podem ser excluídas, pois seus registros precisam ser preservados para auditoria.");
+    alert(error.message);
   }
 };
 
