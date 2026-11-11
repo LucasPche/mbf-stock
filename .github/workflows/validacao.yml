@@ -1,0 +1,26 @@
+name: Validacao MBF Stock
+
+on:
+  push:
+    branches: [entrega0911]
+  pull_request:
+    branches: [entrega0911]
+  workflow_dispatch:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Executar testes Python
+        run: python -m unittest discover -v
+      - name: Verificar sintaxe JavaScript
+        run: node --check public/app.js
+      - name: Verificar XML BPMN
+        run: python -c "import xml.etree.ElementTree as ET; ET.parse('docs/processo_retirada.bpmn')"
