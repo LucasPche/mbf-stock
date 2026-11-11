@@ -113,6 +113,8 @@ def init_db():
     ensure_column(cur, "parts", "unit_price", "REAL NOT NULL DEFAULT 0")
     ensure_column(cur, "parts", "sector", "TEXT DEFAULT ''")
     ensure_column(cur, "parts", "entry_date", "TEXT DEFAULT ''")
+    ensure_column(cur, "parts", "deleted_at", "TEXT DEFAULT NULL")
+    ensure_column(cur, "parts", "deleted_by", "INTEGER DEFAULT NULL")
 
     cur.execute("SELECT COUNT(*) AS total FROM users")
     if cur.fetchone()["total"] == 0:
@@ -281,7 +283,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/me":
             self.send_json({"user": user})
         elif path == "/api/parts":
-            rows = cur.execute("SELECT * FROM parts ORDER BY name").fetchall()
+            rows = cur.execute("SELECT * FROM parts WHERE deleted_at IS NULL ORDER BY name").fetchall()
             self.send_json({"parts": [row_dict(row) for row in rows]})
         elif path == "/api/requests":
             if user["role"] == "admin":
@@ -310,7 +312,7 @@ class Handler(SimpleHTTPRequestHandler):
         elif path == "/api/movements":
             rows = cur.execute(
                 """
-                SELECT m.*, p.name AS part_name, u.name AS user_name
+                SELECT m.*, p.name AS part_name, p.code AS part_code, p.deleted_at AS part_deleted_at, u.name AS user_name
                 FROM movements m
                 LEFT JOIN parts p ON p.id = m.part_id
                 LEFT JOIN users u ON u.id = m.user_id
@@ -505,7 +507,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "ID da peca invalido"}, 400)
                 return
             con = connect()
-            part = con.execute("SELECT * FROM parts WHERE id = ?", (part_id,)).fetchone()
+            part = con.execute("SELECT * FROM parts WHERE id = ? AND deleted_at IS NULL", (part_id,)).fetchone()
             if not part:
                 con.close()
                 self.send_json({"error": "Peca nao encontrada"}, 404)
@@ -550,7 +552,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return
 
             peca_anterior = cur.execute(
-                "SELECT quantity FROM parts WHERE id = ?",
+                "SELECT quantity FROM parts WHERE id = ? AND deleted_at IS NULL",
             (part_id,)
             ).fetchone()
             if peca_anterior is None:
@@ -779,27 +781,45 @@ class Handler(SimpleHTTPRequestHandler):
                 return
 
             con = connect()
-            vinculada = con.execute(
-            "SELECT 1 FROM requests WHERE part_id = ? LIMIT 1",
-            (part_id,)
-        ).fetchone()
-            
-            movimentacao = con.execute(
-                "SELECT 1 FROM movements WHERE part_id = ? LIMIT 1",
-                (part_id,)
-        ).fetchone()
+            try:
+                cur = con.cursor()
+                part = cur.execute(
+                    "SELECT id, code, name, quantity FROM parts WHERE id = ? AND deleted_at IS NULL",
+                    (part_id,)
+                ).fetchone()
+                if part is None:
+                    self.send_json({"error": "Peça não encontrada ou já excluída"}, 404)
+                    return
 
-            if vinculada or movimentacao:
+                # Exclusão lógica: preserva as chaves estrangeiras e todo o histórico.
+                cur.execute(
+                    "UPDATE parts SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ? "
+                    "WHERE id = ? AND deleted_at IS NULL",
+                    (user["id"], part_id)
+                )
+                # Solicitações ainda pendentes não podem ser aprovadas após a exclusão.
+                cur.execute(
+                    "UPDATE requests SET status = 'rejeitado', "
+                    "admin_note = 'Peça excluída do estoque pelo administrador' "
+                    "WHERE part_id = ? AND status = 'pendente'",
+                    (part_id,)
+                )
+                cur.execute(
+                    "INSERT INTO movements (part_id, user_id, type, quantity, note) "
+                    "VALUES (?, ?, 'exclusao', 1, ?)",
+                    (part_id, user["id"],
+                     f"Peça {part['code']} - {part['name']} excluída do estoque. "
+                     f"Saldo no momento da exclusão: {part['quantity']}. "
+                     "Registro preservado para auditoria.")
+                )
+                con.commit()
+                registrar_log("PECA_EXCLUIDA", user["username"], f"ID: {part_id} | Código: {part['code']}")
+                self.send_json({"ok": True, "message": "Peça excluída do estoque; histórico preservado."})
+            except sqlite3.Error:
+                con.rollback()
+                self.send_json({"error": "Não foi possível excluir a peça"}, 500)
+            finally:
                 con.close()
-                self.send_json({
-                    "error": "Esta peça possui solicitações ou movimentações vinculadas e não pode ser excluída."
-                }, 409)
-                return
-
-            con.execute("DELETE FROM parts WHERE id = ?", (part_id,))
-            con.commit()
-            con.close()
-            self.send_json({"ok": True})
             return
         if path.startswith("/api/users/"):
             target_id = validar_id(path.rsplit("/", 1)[1])
