@@ -54,13 +54,13 @@
           <p id="pageSubtitle">Resumo do estoque e das solicita&ccedil;&otilde;es da MBF.</p>
         </div>
         <div class="search">
-          <input id="searchInput" placeholder="Buscar pe&ccedil;a, codigo ou local">
+          <input id="searchInput" placeholder="Buscar pe&ccedil;a, c&oacute;digo ou local">
         </div>
       </header>
 
       <section class="metrics">
         <article><span>Pe&ccedil;as cadastradas</span><strong id="metricParts">0</strong></article>
-        <article><span>Abaixo do minimo</span><strong id="metricLow">0</strong></article>
+        <article><span>Abaixo do m&iacute;nimo</span><strong id="metricLow">0</strong></article>
         <article><span>Solicita&ccedil;&otilde;es pendentes</span><strong id="metricPending">0</strong></article>
         <article class="admin-only"><span>Cadastros pendentes</span><strong id="metricSignup">0</strong></article>
       </section>
@@ -77,8 +77,8 @@
 
           <div class="panel">
             <div class="panel-head">
-              <h3>Itens criticos</h3>
-              <span>Abaixo do minimo ou zerados</span>
+              <h3>Itens cr&iacute;ticos</h3>
+              <span>Abaixo do m&iacute;nimo ou zerados</span>
             </div>
             <div class="request-list" id="criticalList"></div>
           </div>
@@ -86,7 +86,7 @@
           <div class="panel wide">
             <div class="panel-head">
               <h3>Resumo financeiro</h3>
-              <span>Valor estimado com base no preco unitario</span>
+              <span>Valor estimado com base no pre&ccedil;o unit&aacute;rio</span>
             </div>
             <div class="summary-row">
               <article><span>Valor total</span><strong id="metricValue">R$ 0,00</strong></article>
@@ -104,7 +104,7 @@
             <select id="categoryFilter">
               <option value="">Todas as categorias</option>
               <option>A&ccedil;o</option>
-              <option>Consumivel</option>
+              <option value="Consumivel">Consum&iacute;vel</option>
               <option value="Peca">Pe&ccedil;a</option>
               <option>Ferramenta</option>
               <option>Outro</option>
@@ -153,7 +153,7 @@
             <label>Categoria
               <select id="partCategory">
                 <option>A&ccedil;o</option>
-                <option>Consumivel</option>
+                <option value="Consumivel">Consum&iacute;vel</option>
                 <option value="Peca">Pe&ccedil;a</option>
                 <option>Ferramenta</option>
                 <option>Outro</option>
@@ -169,7 +169,7 @@
             </div>
             <div class="two">
               <label>Fornecedor <input id="partSupplier" placeholder="Fornecedor principal"></label>
-              <label>Pre&ccedil;o unitario <input id="partUnitPrice" type="number" min="0" step="0.01" placeholder="0.00"></label>
+              <label>Pre&ccedil;o unit&aacute;rio <input id="partUnitPrice" type="number" min="0" step="0.01" placeholder="0.00"></label>
             </div>
             
             <div class="two">
@@ -198,7 +198,7 @@
             </div>
             <div class="admin-note">
               <strong>CRUD do estoque</strong>
-              <p>Create: cadastrar pe&ccedil;a. Read: listar pe&ccedil;as. Update: editar cadastro. Delete: excluir pe&ccedil;a.</p>
+              <p>Criar: cadastrar pe&ccedil;a. Consultar: listar pe&ccedil;as. Atualizar: editar cadastro. Excluir: remover pe&ccedil;a.</p>
             </div>
           </div>
         </div>
@@ -265,7 +265,7 @@
         <div class="dashboard-grid">
           <div class="panel wide">
             <div class="panel-head">
-              <h3>Relat&oacute;rio de estoque minimo</h3>
+              <h3>Relat&oacute;rio de estoque m&iacute;nimo</h3>
               <button type="button" id="exportCritical">Exportar CSV</button>
             </div>
             <div class="table-wrap">
@@ -318,7 +318,7 @@
         <input id="signupUsername" required placeholder="ex.: lucas">
       </label>
       <label>Senha
-        <input id="signupPassword" type="password" minlength="6" required placeholder="minimo 6 caracteres">
+        <input id="signupPassword" type="password" minlength="6" required placeholder="m&iacute;nimo de 6 caracteres">
       </label>
       <label>Setor
         <input id="signupSector" placeholder="ex.: Corte, Solda, Almoxarifado">
@@ -342,7 +342,7 @@
       <label>Quantidade
         <input id="requestQuantity" type="number" min="1" value="1" required>
       </label>
-      <label>Comentarios ou alteracoes desejadas
+      <label>Coment&aacute;rios ou altera&ccedil;&otilde;es desejadas
         <textarea id="requestComment" rows="4" placeholder="Ex.: precisa cortar, separar para ordem de servico, trocar medida..."></textarea>
       </label>
       <div class="modal-actions">
@@ -380,7 +380,7 @@
     <h3>Finalidade</h3>
     <p>
         Os dados sao utilizados para autenticacao,
-        administracao de usuarios, controle de estoque
+        administra&ccedil;&atilde;o de usu&aacute;rios, controle de estoque
         e auditoria das operacoes.
     </p>
 
