@@ -23,7 +23,7 @@ class FrontendSecurityTests(unittest.TestCase):
         for field in ("category", "part.code", "part.name", "part.quantity",
                       "part.min_quantity", "part.unit"):
             self.assertIn("${escapeHTML(" + field + ")}", self.source)
-        self.assertIn('escapeHTML(part.supplier || "Nao informado")', self.source)
+        self.assertIn('escapeHTML(part.supplier || "Não informado")', self.source)
 
     def test_critical_report_escapes_fields(self):
         start = self.source.index("function renderReports()")
