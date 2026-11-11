@@ -391,23 +391,38 @@ window.openRequest = id => {
   $("#requestDialog").showModal();
 };
 
-window.reviewRequest = async (id, status) => {
-  const note = prompt(status === "aprovado" ? "Observacao da aprovacao:" : "Motivo da rejeicao:") || "";
-  await request(`/api/requests/${id}`, {
-    method: "PUT",
-    body: JSON.stringify({ status, admin_note: note })
-  });
-  await loadAll();
-};
+async function reviewPendingItem(endpoint, id, status, kind) {
+  if (api.user?.role !== "admin") {
+    alert("Apenas administradores podem analisar solicitações.");
+    return;
+  }
+  const safeId = Number(id);
+  if (!Number.isSafeInteger(safeId) || safeId <= 0) {
+    alert("Identificador da solicitação inválido.");
+    return;
+  }
+  const approving = status === "aprovado";
+  const note = prompt(
+    approving ? (kind === "cadastro" ? "Observação da liberação:" : "Observação da aprovação:")
+              : "Motivo da rejeição:"
+  );
+  if (note === null) return;
+  try {
+    await request(`${endpoint}/${safeId}`, {
+      method: "PUT",
+      body: JSON.stringify({ status, admin_note: note.trim() })
+    });
+    await loadAll();
+    alert(approving ? (kind === "cadastro" ? "Cadastro liberado com sucesso." : "Solicitação aprovada. Estoque atualizado.")
+                    : "Solicitação rejeitada.");
+  } catch (error) {
+    console.error("Falha ao analisar solicitação:", error);
+    alert("Não foi possível " + (approving ? "aprovar" : "rejeitar") + ": " + error.message);
+  }
+}
 
-window.reviewSignup = async (id, status) => {
-  const note = prompt(status === "aprovado" ? "Observacao da liberacao:" : "Motivo da rejeicao:") || "";
-  await request(`/api/signup-requests/${id}`, {
-    method: "PUT",
-    body: JSON.stringify({ status, admin_note: note })
-  });
-  await loadAll();
-};
+window.reviewRequest = (id, status) => reviewPendingItem("/api/requests", id, status, "peça");
+window.reviewSignup = (id, status) => reviewPendingItem("/api/signup-requests", id, status, "cadastro");
 
 window.editUser = id => {
   const user = state.users.find(item => item.id === id);
