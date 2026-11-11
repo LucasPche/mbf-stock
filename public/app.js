@@ -371,7 +371,7 @@ window.deletePart = async id => {
     await request(`/api/parts/${id}`, { method: "DELETE" });
     await loadAll();
   } catch (error) {
-    alert(error.message + "\\n\\nPeças com solicitações ou movimentações não podem ser excluídas, pois seus registros precisam ser preservados para auditoria.");
+    alert(error.message + "\n\nPeças com solicitações ou movimentações não podem ser excluídas, pois seus registros precisam ser preservados para auditoria.");
   }
 };
 
@@ -499,7 +499,7 @@ $("#categoryFilter").addEventListener("change", renderParts);
 
 $("#partForm").addEventListener("submit", async event => {
   event.preventDefault();
-  const cep = $("#supplierCep").value.replace(/\\D/g, "");
+  const cep = $("#supplierCep").value.replace(/\D/g, "");
   if (cep.length !== 8) {
     alert("Informe o CEP do fornecedor com 8 dígitos antes de salvar.");
     $("#supplierCep").focus();
