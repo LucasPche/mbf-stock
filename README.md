@@ -189,3 +189,12 @@ Durante o projeto, foram realizadas melhorias para aumentar a segurança, corrig
 Os testes automatizados e as verificações realizadas nas principais telas ajudaram a confirmar o funcionamento das funcionalidades implementadas.
 
 O sistema reúne recursos de cadastro, consulta, solicitações e histórico de movimentações, atendendo ao objetivo de organizar e facilitar o acompanhamento dos materiais de uma metalúrgica.
+
+## Atualização de modelagem e segurança — 11/11/2026
+
+- Modelo BPMN 2.0 de solicitação e aprovação: [docs/processo_retirada.bpmn](docs/processo_retirada.bpmn). Abrir em editor BPMN para conferir e exportar figura antes de inserir na monografia.
+- Dashboard e relatório de itens críticos: escape de conteúdo dinâmico na interface.
+- Exportação CSV: tratamento de conteúdo que poderia ser interpretado como fórmula por planilhas.
+- Ver [ARQUITETURA_E_DECISOES.md](ARQUITETURA_E_DECISOES.md) para limitações e decisões técnicas.
+
+**Escopo:** projeto acadêmico em desenvolvimento. A separação em módulos não representa MVC completo. SQLite e `http.server` permanecem adequados somente à demonstração controlada, sem homologação corporativa. Os testes automatizados e a matriz de aceite devem ser reproduzidos no commit final.
