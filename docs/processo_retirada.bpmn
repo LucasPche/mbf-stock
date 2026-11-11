@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_MBF" targetNamespace="https://github.com/LucasPche/mbf-stock">
+  <bpmn:collaboration id="Collaboration_MBF"><bpmn:participant id="Participant_MBF" name="MBF Stock - Solicitação de material" processRef="Process_MBF"/></bpmn:collaboration>
+  <bpmn:process id="Process_MBF" name="Solicitação e aprovação de retirada" isExecutable="false">
+    <bpmn:laneSet id="Lanes_MBF">
+      <bpmn:lane id="Lane_Operador" name="Operador"><bpmn:flowNodeRef>Start_Necessidade</bpmn:flowNodeRef><bpmn:flowNodeRef>Task_Solicitar</bpmn:flowNodeRef></bpmn:lane>
+      <bpmn:lane id="Lane_Sistema" name="Sistema"><bpmn:flowNodeRef>Task_Validar</bpmn:flowNodeRef><bpmn:flowNodeRef>Task_RegistrarPendente</bpmn:flowNodeRef><bpmn:flowNodeRef>Task_ConferirSaldo</bpmn:flowNodeRef><bpmn:flowNodeRef>Gateway_Saldo</bpmn:flowNodeRef><bpmn:flowNodeRef>Task_BaixarRegistrar</bpmn:flowNodeRef><bpmn:flowNodeRef>Task_InformarInsuficiencia</bpmn:flowNodeRef><bpmn:flowNodeRef>End_Aprovado</bpmn:flowNodeRef><bpmn:flowNodeRef>End_Insuficiente</bpmn:flowNodeRef></bpmn:lane>
+      <bpmn:lane id="Lane_Administrador" name="Administrador"><bpmn:flowNodeRef>Task_Analisar</bpmn:flowNodeRef><bpmn:flowNodeRef>Gateway_Aprovar</bpmn:flowNodeRef><bpmn:flowNodeRef>Task_Rejeitar</bpmn:flowNodeRef><bpmn:flowNodeRef>End_Rejeitado</bpmn:flowNodeRef></bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Necessidade" name="Necessidade de material"><bpmn:outgoing>F1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:userTask id="Task_Solicitar" name="Selecionar peça e solicitar retirada"><bpmn:incoming>F1</bpmn:incoming><bpmn:outgoing>F2</bpmn:outgoing></bpmn:userTask>
+    <bpmn:serviceTask id="Task_Validar" name="Validar peça e quantidade"><bpmn:incoming>F2</bpmn:incoming><bpmn:outgoing>F3</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_RegistrarPendente" name="Registrar solicitação pendente"><bpmn:incoming>F3</bpmn:incoming><bpmn:outgoing>F4</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:userTask id="Task_Analisar" name="Analisar solicitação"><bpmn:incoming>F4</bpmn:incoming><bpmn:outgoing>F5</bpmn:outgoing></bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_Aprovar" name="Aprovar?" default="F6"><bpmn:incoming>F5</bpmn:incoming><bpmn:outgoing>F6</bpmn:outgoing><bpmn:outgoing>F7</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Rejeitar" name="Registrar rejeição"><bpmn:incoming>F6</bpmn:incoming><bpmn:outgoing>F8</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="End_Rejeitado" name="Solicitação rejeitada"><bpmn:incoming>F8</bpmn:incoming></bpmn:endEvent>
+    <bpmn:serviceTask id="Task_ConferirSaldo" name="Verificar saldo disponível"><bpmn:incoming>F7</bpmn:incoming><bpmn:outgoing>F9</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_Saldo" name="Saldo suficiente?" default="F10"><bpmn:incoming>F9</bpmn:incoming><bpmn:outgoing>F10</bpmn:outgoing><bpmn:outgoing>F11</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_InformarInsuficiencia" name="Impedir aprovação por saldo insuficiente"><bpmn:incoming>F10</bpmn:incoming><bpmn:outgoing>F12</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="End_Insuficiente" name="Pedido permanece pendente"><bpmn:incoming>F12</bpmn:incoming></bpmn:endEvent>
+    <bpmn:serviceTask id="Task_BaixarRegistrar" name="Baixar saldo, registrar movimentação e aprovar"><bpmn:incoming>F11</bpmn:incoming><bpmn:outgoing>F13</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="End_Aprovado" name="Retirada aprovada"><bpmn:incoming>F13</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="F1" sourceRef="Start_Necessidade" targetRef="Task_Solicitar"/>
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_Solicitar" targetRef="Task_Validar"/>
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_Validar" targetRef="Task_RegistrarPendente"/>
+    <bpmn:sequenceFlow id="F4" sourceRef="Task_RegistrarPendente" targetRef="Task_Analisar"/>
+    <bpmn:sequenceFlow id="F5" sourceRef="Task_Analisar" targetRef="Gateway_Aprovar"/>
+    <bpmn:sequenceFlow id="F6" sourceRef="Gateway_Aprovar" targetRef="Task_Rejeitar"/>
+    <bpmn:sequenceFlow id="F7" name="Sim" sourceRef="Gateway_Aprovar" targetRef="Task_ConferirSaldo"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">aprovado</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F8" sourceRef="Task_Rejeitar" targetRef="End_Rejeitado"/>
+    <bpmn:sequenceFlow id="F9" sourceRef="Task_ConferirSaldo" targetRef="Gateway_Saldo"/>
+    <bpmn:sequenceFlow id="F10" sourceRef="Gateway_Saldo" targetRef="Task_InformarInsuficiencia"/>
+    <bpmn:sequenceFlow id="F11" name="Sim" sourceRef="Gateway_Saldo" targetRef="Task_BaixarRegistrar"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">saldo_suficiente</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F12" sourceRef="Task_InformarInsuficiencia" targetRef="End_Insuficiente"/>
+    <bpmn:sequenceFlow id="F13" sourceRef="Task_BaixarRegistrar" targetRef="End_Aprovado"/>
+  </bpmn:process>
+</bpmn:definitions>
