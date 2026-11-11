@@ -101,7 +101,7 @@ function showApp() {
   state.view = "dashboard";
   $("#loginScreen").classList.add("hidden");
   $("#app").classList.remove("hidden");
-  $("#userLabel").textContent = `${api.user.name} - ${api.user.role === "admin" ? "Admin" : "Usuario"}`;
+  $("#userLabel").textContent = `${api.user.name} - ${api.user.role === "admin" ? "Admin" : "Usuário"}`;
   $$(".admin-only").forEach(el => el.classList.toggle("hidden", api.user.role !== "admin"));
 }
 
@@ -216,8 +216,8 @@ function renderUsers() {
         <span class="badge ${user.active ? "ativo" : "bloqueado"}">${user.active ? "ativo" : "bloqueado"}</span>
       </div>
       <p>Login: ${escapeHTML(user.username)}</p>
-      <p>Perfil: ${user.role === "admin" ? "Administrador" : "Usuario comum"}</p>
-      <p>Setor: ${escapeHTML(user.sector || "Nao informado")}</p>
+      <p>Perfil: ${user.role === "admin" ? "Administrador" : "Usuário comum"}</p>
+      <p>Setor: ${escapeHTML(user.sector || "Não informado")}</p>
       <div class="row-actions">
         <button class="secondary" onclick="editUser(${userId})">Editar</button>
         <button class="secondary" onclick="deleteUser(${userId})">Excluir</button>
@@ -247,7 +247,7 @@ function renderSignupRequests() {
           <span class="badge ${escapeHTML(req.status)}">${escapeHTML(req.status)}</span>
         </div>
         <p><strong>Login solicitado:</strong> ${escapeHTML(req.username)}</p>
-        <p><strong>Setor:</strong> ${escapeHTML(req.sector || "Nao informado")}</p>
+        <p><strong>Setor:</strong> ${escapeHTML(req.sector || "Não informado")}</p>
         <p><strong>Motivo:</strong> ${escapeHTML(req.reason || "Sem motivo informado")}</p>
         <p><strong>Resposta admin:</strong> ${escapeHTML(req.admin_note || "Sem resposta")}</p>
         ${actions}
@@ -277,7 +277,7 @@ function renderDashboard() {
         <span class="badge ${statusOf(part)}">${statusLabel(statusOf(part))}</span>
       </div>
       <p>Atual: ${escapeHTML(part.quantity)} ${escapeHTML(part.unit)} | Minimo: ${escapeHTML(part.min_quantity)} ${escapeHTML(part.unit)}</p>
-      <p>Fornecedor: ${escapeHTML(part.supplier || "Nao informado")}</p>
+      <p>Fornecedor: ${escapeHTML(part.supplier || "Não informado")}</p>
     </article>
   `).join("") || `<div class="request-card"><p>Nenhum item critico no momento.</p></div>`;
 }
@@ -317,13 +317,13 @@ function updateView() {
     state.view = "dashboard";
   }
   const titles = {
-    estoque: ["Estoque", "Consulte as pecas disponiveis e solicite ao almoxarifado."],
-    dashboard: ["Dashboard", "Resumo do estoque e das solicitacoes da MBF."],
-    solicitacoes: ["Solicitacoes", "Acompanhe pedidos e comentarios de alteracao."],
-    admin: ["Admin pecas", "Cadastre, edite e remova pecas do estoque da MBF."],
-    usuarios: ["Usuarios", "Libere novos cadastros e acompanhe quem ja tem acesso."],
-    relatorios: ["Relatorios", "Exporte informacoes e acompanhe indicadores do estoque."],
-    historico: ["Historico", "Veja as movimentacoes registradas no banco de dados."]
+    estoque: ["Estoque", "Consulte as peças disponíveis e solicite ao almoxarifado."],
+    dashboard: ["Dashboard", "Resumo do estoque e das solicitações da MBF."],
+    solicitacoes: ["Solicitações", "Acompanhe pedidos e comentários de alteração."],
+    admin: ["Admin peças", "Cadastre, edite e remova peças do estoque da MBF."],
+    usuarios: ["Usuários", "Libere novos cadastros e acompanhe quem ja tem acesso."],
+    relatorios: ["Relatórios", "Exporte informações e acompanhe indicadores do estoque."],
+    historico: ["Histórico", "Veja as movimentações registradas no banco de dados."]
   };
   $$(".view").forEach(view => view.classList.add("hidden"));
   $(`#${state.view}View`).classList.remove("hidden");
@@ -351,7 +351,7 @@ function fillForm(part = null) {
   $("#supplierCep").value = "";
   $("#supplierAddress").value = "";
   validatedSupplierCep = "";
-  $("#formTitle").textContent = part ? "Editar peca" : "Cadastrar peca";
+  $("#formTitle").textContent = part ? "Editar peça" : "Cadastrar peça";
 }
 
 function fillUserForm(user = null) {
@@ -373,7 +373,7 @@ window.editPart = id => {
 };
 
 window.deletePart = async id => {
-  if (!confirm("Excluir esta peca do estoque?")) return;
+  if (!confirm("Excluir esta peça do estoque?")) return;
   try {
     await request(`/api/parts/${id}`, { method: "DELETE" });
     await loadAll();
@@ -568,7 +568,7 @@ $("#userForm").addEventListener("submit", async event => {
 $("#clearUserForm").addEventListener("click", () => fillUserForm());
 
 $("#exportCritical").addEventListener("click", () => {
-  const rows = [["Codigo", "Peca", "Quantidade", "Minimo", "Faltam", "Fornecedor"]];
+  const rows = [["Codigo", "Peça", "Quantidade", "Mínimo", "Faltam", "Fornecedor"]];
   state.parts.filter(part => statusOf(part) !== "ok").forEach(part => {
     rows.push([part.code, part.name, `${part.quantity} ${part.unit}`, `${part.min_quantity} ${part.unit}`, Math.max(0, part.min_quantity - part.quantity), part.supplier || ""]);
   });
@@ -576,7 +576,7 @@ $("#exportCritical").addEventListener("click", () => {
 });
 
 $("#exportAll").addEventListener("click", () => {
-  const rows = [["Codigo", "Peca", "Categoria", "Fornecedor", "Preco", "Setor", "Local", "Quantidade", "Minimo", "Unidade", "Data entrada"]];
+  const rows = [["Codigo", "Peça", "Categoria", "Fornecedor", "Preço", "Setor", "Local", "Quantidade", "Mínimo", "Unidade", "Data entrada"]];
   state.parts.forEach(part => {
     rows.push([part.code, part.name, part.category, part.supplier || "", part.unit_price || 0, part.sector || "", part.location, part.quantity, part.min_quantity, part.unit, part.entry_date || ""]);
   });
