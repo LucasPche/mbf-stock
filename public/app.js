@@ -61,11 +61,10 @@ function money(value) {
 function csvDownload(filename, rows) {
   const safeCSV = value => {
     let text = String(value ?? "");
-    if (/^\\s*[=+@\\-\\t\\r]/.test(text)) text = "\'" + text;
+    if (/^\s*[=+@\-\t\r]/.test(text)) text = "'" + text;
     return `"${text.replaceAll('"', '""')}"`;
   };
-  const csv = rows.map(row => row.map(safeCSV).join(";")).join("
-");
+  const csv = rows.map(row => row.map(safeCSV).join(";")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
