@@ -14,7 +14,7 @@ A matriz relaciona os requisitos às evidências disponíveis, permitindo identi
 |---|---|---|---|
 | RF01 | Login e autenticação | Testes de credenciais válidas e inválidas, sessões e logout; acesso manual com contas distintas | Validado nos cenários executados |
 | RF02 | Perfis de acesso | Testes automatizados de autorização; verificação manual das opções disponíveis para administrador e usuário comum | Validado nos cenários executados |
-| RF03 | Cadastro de peças | Testes automatizados de cadastro, edição, ajuste de quantidade e restrições de exclusão | Parcialmente validado |
+| RF03 | Cadastro de peças | Testes automatizados de cadastro, edição, ajuste de quantidade e restrições de exclusão; nova conferência manual informada pelo responsável em 16/11/2026 | Validado nos cenários executados; aceite integral a documentar |
 | RF04 | Busca e filtros | Busca por código MBF-002 e filtragem por categoria Aço, com quatro peças correspondentes | Validado nos cenários executados |
 | RF05 | Solicitações de materiais | Criação manual da solicitação #4, quantidade de uma barra, com comentário; testes automatizados de entradas válidas e inválidas | Validado nos cenários executados |
 | RF06 | Aprovação e rejeição | Aprovação manual da solicitação #4, atualização do status e registro da resposta; testes automatizados de rejeição e análise duplicada | Validado nos cenários executados |
@@ -22,7 +22,7 @@ A matriz relaciona os requisitos às evidências disponíveis, permitindo identi
 | RF08 | Histórico de movimentações | Registro manualmente confirmado da saída de uma barra, associada à solicitação #4; testes de movimentações | Validado nos cenários executados |
 | RF09 | Dashboard | Conferência dos indicadores, distribuição por categoria e atualização de solicitações pendentes de 0 para 1 e novamente para 0 | Validado nos cenários executados |
 | RF10 | Exportação CSV | Exportação e abertura em planilha dos relatórios de estoque e itens críticos; conferência de quantidades e faltas | Validado nos cenários executados |
-| RF11 | Gerenciamento de usuários | Visualização de contas, edição do setor do Operador MBF e verificação das permissões na interface | Parcialmente validado |
+| RF11 | Gerenciamento de usuários | Visualização de contas, edição de cadastro e verificação de permissões; nova conferência manual informada pelo responsável em 16/11/2026 | Validado nos cenários executados; aceite integral a documentar |
 
 **Critério de classificação:** a expressão "Validado nos cenários executados" indica que os testes descritos apresentaram os resultados esperados. Não significa que todos os cenários possíveis do requisito tenham sido executados.
 
@@ -43,7 +43,7 @@ Os testes automatizados abrangem:
 - Serviços de estoque, segurança e persistência.
 - Auditoria do banco de dados.
 
-# 3.1. Resultado da execução
+# 3.1. Resultado da execução histórica (11/11/2026)
 
 **Data:** 11/11/2026
 
@@ -63,6 +63,21 @@ python -m unittest discover -v
 ```
 
 A execução apresentou a mensagem `OK`, sem falhas ou erros.
+
+# 3.2. Nova execução automatizada (16/11/2026)
+
+Em 16/11/2026, o responsável executou localmente `python -m unittest discover -v` e apresentou a saída do terminal.
+
+| Indicador | Resultado |
+|---|---|
+| Testes executados | 50 |
+| Testes aprovados | 50 |
+| Falhas | 0 |
+| Erros | 0 |
+| Duração | 15,902 segundos |
+| Resultado | `OK` |
+
+Esta execução foi demonstrada por captura do terminal do VS Code. Não representa nova medição de cobertura de código, nem comprova isoladamente todos os critérios de aceitação.
 
 # 4. Verificações manuais
 
@@ -173,7 +188,7 @@ Foi realizada uma edição no cadastro do Operador MBF, alterando o setor de `Pr
 
 Após salvar, o cadastro apresentou o novo setor, mantendo o perfil de usuário comum e o status ativo.
 
-**Resultado:** edição básica aprovada. Permanecem pendentes outros cenários de gerenciamento.
+**Resultado histórico (11/11):** edição básica aprovada; outros cenários ainda não estavam comprovados. Em 16/11, o responsável confirmou nova verificação manual do gerenciamento de usuários e das permissões, com funcionamento normal. Os passos e evidências específicos devem ser formalizados para aceite integral.
 
 # 4.8. Permissões do usuário comum
 
@@ -186,6 +201,12 @@ Na listagem de estoque, o usuário comum visualizou o botão Solicitar, mas não
 **Resultado:** restrições da interface aprovadas nos cenários observados.
 
 A segurança das rotas administrativas também é abordada nos testes automatizados, sendo distinta da simples ocultação de botões.
+
+# 4.9. Nova conferência manual de RF03 e RF11 (16/11/2026)
+
+O responsável informou ter repetido as verificações de **RF03 (cadastro/manutenção de peças)** e **RF11 (gerenciamento de usuários)**, confirmando funcionamento normal. A orientação incluiu cadastro, edição, persistência após atualização da página e permissões, mas não foi apresentado registro detalhado de cada passo executado.
+
+**Resultado declarado:** aprovado nos cenários novamente conferidos. A confirmação complementa as evidências anteriores, sem equivaler a homologação formal de todos os critérios de aceite.
 
 # 5. Testes de integridade e segurança
 
@@ -235,7 +256,7 @@ python -m coverage report -m
 | `server.py` | 477 | 173 | 64% |
 | **Total** | **556** | **183** | **67%** |
 
-A execução com cobertura apresentou 45 testes aprovados.
+A execução **histórica com cobertura**, de 11/11/2026, apresentou 45 testes aprovados. Em 16/11/2026 houve nova execução de 50 testes, sem medição de cobertura apresentada.
 
 A cobertura total da aplicação foi de **67%***, superando a meta de referência de 50%.
 
@@ -245,11 +266,11 @@ Esse percentual não deve ser confundido com a porcentagem de requisitos funcion
 
 O projeto possui 11 requisitos funcionais, identificados de RF01 a RF11.
 
-Para alcançar um índice mínimo de 75% de requisitos integralmente aprovados, é necessário comprovar a aprovação de pelo menos nove requisitos.
+Para a Entrega 5 de 16/11/2026, a meta informada é de **100% dos 11 requisitos funcionais implementados e validados**. A meta anterior de 75% (9 de 11) não é suficiente para esta etapa.
 
 A presente matriz demonstra resultados positivos em testes automatizados e verificações manuais, mas utiliza a classificação "Validado nos cenários executados" quando não há comprovação de todos os critérios de aceitação.
 
-Assim, o índice de aprovação integral dos requisitos ainda depende da formalização desses critérios e da confirmação dos cenários faltantes.
+Em 16/11, o responsável confirmou funcionamento normal de RF03 e RF11 em nova conferência manual. Os 11 requisitos têm resultados positivos nos cenários registrados; contudo, a aprovação **integral e formal** depende da documentação de critérios de aceitação, passos executados e evidências correspondentes.
 
 A quantidade de testes automatizados aprovados e a cobertura de código são indicadores complementares de qualidade, mas não substituem a avaliação individual dos requisitos.
 
@@ -257,8 +278,8 @@ A quantidade de testes automatizados aprovados e a cobertura de código são ind
 
 Antes da entrega definitiva, recomenda-se:
 
-1. Complementar os testes de cadastro, edição e exclusão de peças.
-2. Validar os cenários restantes de gerenciamento de usuários.
+1. Formalizar os passos e evidências da nova conferência de cadastro, edição e exclusão de peças, incluindo restrições aplicáveis.
+2. Formalizar os passos e evidências da nova conferência de gerenciamento de usuários, incluindo restrições administrativas.
 3. Revisar o tratamento de HTML em todas as áreas da interface.
 4. Complementar os testes de segurança dos arquivos CSV.
 5. Formalizar os critérios de aceitação de cada requisito funcional.
@@ -268,7 +289,7 @@ Antes da entrega definitiva, recomenda-se:
 
 Os testes realizados demonstraram resultados positivos nas principais operações do MBF Stock, incluindo autenticação, permissões, solicitações, aprovação, movimentações de estoque, histórico, Dashboard e exportação de relatórios.
 
-Na execução de 11/11/2026, os 45 testes automatizados foram aprovados, sem falhas ou erros, e a cobertura do código da aplicação alcançou 67%.
+Na execução histórica de 11/11/2026, os 45 testes automatizados foram aprovados, sem falhas ou erros, e a cobertura do código da aplicação alcançou 67%. Em 16/11/2026, uma nova execução local apresentou 50 testes aprovados, sem falhas ou erros; não foi apresentada nova medição de cobertura.
 
 As verificações manuais complementaram os resultados automatizados, demonstrando o comportamento do sistema em situações reais de utilização.
 
@@ -281,3 +302,11 @@ A matriz permite acompanhar a evolução da validação e identificar os cenári
 - A inspeção estática do JavaScript confirmou sintaxe válida após as correções anteriores, mas não substitui um teste completo em navegador.
 - O modelo `docs/processo_retirada.bpmn` existe no repositório; é necessário conferir visualmente o diagrama em editor BPMN e anexar uma figura à monografia.
 - **Critério de aceite:** os 45 testes e a cobertura de código não equivalem à aprovação formal de pelo menos 9 dos 11 requisitos funcionais. Registrar resultado esperado, obtido, evidência e responsável pelo aceite de cada requisito.
+
+## Atualização de evidências — 16/11/2026
+
+- Execução local demonstrada: **50 testes executados, 50 aprovados, 0 falhas, 0 erros**, em **15,902 segundos**, resultado `OK`.
+- O responsável confirmou funcionamento normal de RF03 e RF11 após nova verificação manual.
+- A cobertura de **67%** continua sendo a medição histórica de 11/11/2026.
+- A confirmação manual não substitui evidências detalhadas ou homologação formal de todos os critérios de aceitação.
+- A aprovação do fluxo no GitHub Actions não foi verificada nesta atualização.
