@@ -167,6 +167,7 @@ python -m coverage report -m
 Na execução de CI da branch de migração em 20/11/2026, foram obtidos:
 
 - **54 testes executados e aprovados**, sem falhas, no ambiente de testes automatizados.
+- **65% de cobertura** dos módulos `server`, `security_service`, `inventory_service` e `database_repository`, medida pelo Coverage.py no GitHub Actions da branch `entregafinal` em 20/11/2026, superando o mínimo de 50% exigido para a Entrega 6.
 - A suíte usa SQLite local para testes unitários e não substitui testes de integração com PostgreSQL real.
 
 O relatório geral de cobertura apresentou 80%. Para avaliar especificamente o código da aplicação, deve ser utilizado o comando com `--source`, indicado acima.
