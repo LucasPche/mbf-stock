@@ -2,7 +2,7 @@ name: Validacao MBF Stock
 
 on:
   push:
-    branches: [entrega0911]
+    branches: [entrega0911, entregafinal]
   pull_request:
     branches: [entrega0911]
   workflow_dispatch:
