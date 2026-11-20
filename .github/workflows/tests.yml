@@ -1,7 +1,7 @@
 name: MBF Stock tests
 on:
   push:
-    branches: [supabase-postgres]
+    branches: [supabase-postgres, entregafinal]
   workflow_dispatch:
 jobs:
   tests:
@@ -15,9 +15,20 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Syntax check
         run: python -m compileall -q server.py database_repository.py inventory_service.py security_service.py
+      - name: Install coverage
+        run: python -m pip install coverage
       - name: Unit tests
         env:
           DATABASE_URL: ''
           MBF_ADMIN_PASSWORD: ci-admin-test-password
           MBF_OPERADOR_PASSWORD: ci-operator-test-password
         run: python -m unittest discover -v
+
+      - name: Application coverage (minimum 50%)
+        env:
+          DATABASE_URL: ''
+          MBF_ADMIN_PASSWORD: ci-admin-test-password
+          MBF_OPERADOR_PASSWORD: ci-operator-test-password
+        run: |
+          python -m coverage run --source=server,security_service,inventory_service,database_repository -m unittest discover
+          python -m coverage report -m --fail-under=50
