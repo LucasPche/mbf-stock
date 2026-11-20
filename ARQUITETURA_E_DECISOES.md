@@ -2,7 +2,7 @@
 
 ## 1. Visão geral da arquitetura
 
-O MBF Stock é um sistema web desenvolvido com Python, HTML, CSS e JavaScript, utilizando SQLite para armazenar os dados.
+O MBF Stock é um sistema web desenvolvido com Python, HTML, CSS e JavaScript, utilizando SQLite no desenvolvimento local e PostgreSQL (Supabase) na demonstração publicada.
 
 A interface se comunica com o servidor por meio de requisições HTTP e respostas JSON. O servidor recebe as solicitações, verifica as permissões dos usuários e executa as operações necessárias.
 
@@ -26,7 +26,7 @@ Navegador (HTML, CSS e JavaScript)
           |     Conexões e esquema
           |
           v
-       SQLite
+ SQLite (local) / PostgreSQL (Supabase)
 ```
 
 O sistema também utiliza o ViaCEP para consultar informações de endereço diretamente pelo navegador.
@@ -55,9 +55,9 @@ A função `reserve_withdrawal()` realiza uma atualização condicional do saldo
 
 ### database_repository.py
 
-É responsável por funções relacionadas à abertura de conexões SQLite e à manutenção do esquema do banco de dados.
+É responsável pela seleção do backend, abertura de conexões SQLite ou PostgreSQL e manutenção do esquema do banco de dados.
 
-As conexões habilitam as chaves estrangeiras e utilizam um tempo de espera para situações em que o banco esteja temporariamente bloqueado.
+No SQLite, as conexões habilitam chaves estrangeiras e tempo de espera para bloqueios. No PostgreSQL, a conexão é realizada por `psycopg` com TLS, usando `DATABASE_URL`.
 
 O servidor mantém algumas funções de acesso ao banco para preservar a compatibilidade com as rotas existentes.
 
@@ -69,7 +69,7 @@ A ferramenta realiza consultas de auditoria sem modificar os registros armazenad
 
 ## 3. Banco de dados
 
-O sistema utiliza SQLite para armazenar informações de usuários, peças, solicitações e movimentações de estoque.
+O sistema utiliza SQLite localmente ou PostgreSQL (Supabase) quando `DATABASE_URL` está configurada, armazenando usuários, peças, solicitações e movimentações de estoque.
 
 As principais tabelas são:
 
@@ -83,7 +83,7 @@ O SQLite foi utilizado por permitir a criação de um banco local integrado à a
 
 Essa escolha facilita o desenvolvimento e a execução do projeto. Entretanto, ambientes com maior número de acessos simultâneos podem exigir uma solução de banco de dados diferente, dependendo dos requisitos de desempenho e disponibilidade.
 
-Uma possível evolução seria utilizar PostgreSQL, mediante adaptação da camada de persistência e validação das operações existentes.
+A adaptação para PostgreSQL foi implementada e validada manualmente na demonstração hospedada. Não há migração automática dos dados SQLite e ainda são recomendados testes específicos de concorrência e integração PostgreSQL.
 
 ## 4. Integridade dos dados
 
@@ -161,7 +161,7 @@ Os testes verificam situações como:
 - Funções dos módulos de segurança, estoque e persistência.
 - Auditoria do banco de dados.
 
-Na execução realizada em 11/11/2026, foram concluídos **45 testes automatizados, todos aprovados**.
+Na execução de CI de 20/11/2026, foram concluídos **54 testes automatizados, todos aprovados** na branch de migração. A suíte não substitui testes de integração com PostgreSQL real.
 
 Para executar novamente:
 
@@ -198,13 +198,13 @@ A separação das funções em módulos específicos reduziu a concentração de
 
 Mesmo com essas melhorias, a aplicação ainda possui limitações relacionadas à arquitetura e à implantação.
 
-Entre os pontos que podem ser aprimorados estão a separação mais completa entre rotas, regras de negócio e persistência, a avaliação de outro banco de dados para ambientes com maior concorrência e a utilização de uma estrutura de servidor adequada à produção.
+Entre os pontos que podem ser aprimorados estão a separação mais completa entre rotas, regras de negócio e persistência, testes de integração e concorrência no PostgreSQL e a utilização de uma estrutura de servidor adequada à produção.
 
 Essas melhorias representam possibilidades de evolução do projeto e devem ser consideradas de acordo com os requisitos definidos para sua utilização.
 
 ## 10. Considerações finais
 
-A arquitetura do MBF Stock foi organizada para permitir a comunicação entre a interface web, o servidor Python e o banco de dados SQLite.
+A arquitetura do MBF Stock foi organizada para permitir a comunicação entre a interface web, o servidor Python e o banco de dados SQLite local ou PostgreSQL remoto.
 
 Durante o desenvolvimento, foram adicionados módulos específicos para segurança, operações de estoque e persistência, além de testes automatizados e ferramentas de auditoria.
 
