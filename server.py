@@ -10,7 +10,7 @@ import time
 import math
 from security_service import validar_id, password_hash, check_password
 from inventory_service import stock_adjustment, reserve_withdrawal
-from database_repository import open_connection, ensure_column
+from database_repository import open_connection, ensure_column, database_errors
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
@@ -491,7 +491,7 @@ class Handler(SimpleHTTPRequestHandler):
                      f"Codigo: {data['code']} | ID: {part_id}"
                 )
                 self.send_json({"ok": True})
-            except sqlite3.IntegrityError:
+            except database_errors():
                 self.send_json({"error": "Codigo ja cadastrado"}, 409)
             finally:
                 con.close()
@@ -815,7 +815,7 @@ class Handler(SimpleHTTPRequestHandler):
                 con.commit()
                 registrar_log("PECA_EXCLUIDA", user["username"], f"ID: {part_id} | Código: {part['code']}")
                 self.send_json({"ok": True, "message": "Peça excluída do estoque; histórico preservado."})
-            except sqlite3.Error:
+            except database_errors():
                 con.rollback()
                 self.send_json({"error": "Não foi possível excluir a peça"}, 500)
             finally:
