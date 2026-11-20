@@ -105,3 +105,10 @@ def ensure_column(cursor, table, column, definition):
     columns = [row["name"] for row in cursor.execute(f"PRAGMA table_info({table})").fetchall()]
     if column not in columns:
         cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+def database_errors():
+    errors = [sqlite3.Error]
+    if using_postgres():
+        import psycopg
+        errors.append(psycopg.Error)
+    return tuple(errors)
