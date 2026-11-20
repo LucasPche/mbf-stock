@@ -10,11 +10,15 @@ O sistema possui dois perfis de acesso: administrador e operador.
 
 ## 2. Como acessar o sistema
 
-Para utilizar o MBF Stock, é necessário ter Python 3.11 ou superior instalado no computador e um navegador atualizado.
+Para utilizar a versão online, basta ter um navegador atualizado, conexão com a internet e credenciais válidas. Não é necessário instalar Python no computador do usuário.
 
-### Iniciando o servidor
+**Endereço da demonstração:** https://mbf-stock-teste.onrender.com/
 
-Abra a pasta do projeto no VS Code e acesse o terminal.
+No plano gratuito do Render, o primeiro acesso após inatividade pode demorar. O acesso local para desenvolvimento é descrito a seguir.
+
+### Iniciando o servidor localmente (desenvolvimento)
+
+Abra a pasta do projeto no VS Code e acesse o terminal. Instale as dependências com `python -m pip install -r requirements.txt`.
 
 Antes da primeira execução com um banco novo, configure as senhas dos usuários iniciais:
 
@@ -164,7 +168,7 @@ O MBF Stock utiliza o serviço ViaCEP para auxiliar no preenchimento de informa�
 
 Ao informar um CEP válido, o navegador pode consultar os dados correspondentes e preencher os campos disponíveis.
 
-Essa consulta auxilia o preenchimento do formulário, mas os dados de endereço não são armazenados no banco SQLite da versão atual.
+Essa consulta auxilia o preenchimento do formulário, mas os dados obtidos do ViaCEP não são persistidos no banco de dados pela integração atual.
 
 ## 12. Como sair do sistema
 
@@ -180,7 +184,7 @@ O sistema também encerra sessões após aproximadamente 30 minutos de inativida
 
 ### Não consigo acessar o sistema
 
-Verifique se o servidor está em execução e se o endereço `http://localhost:8000` foi digitado corretamente.
+Na versão online, confira a conexão com a internet e o endereço `https://mbf-stock-teste.onrender.com/`; aguarde a inicialização se o serviço gratuito estiver inativo. Na execução local, verifique se `python server.py` está em execução e se `http://localhost:8000` foi digitado corretamente.
 
 ### Usuário ou senha incorretos
 
@@ -198,7 +202,13 @@ Confira a quantidade disponível. O sistema impede retiradas que deixariam o est
 
 Caso permaneça um período sem utilizar o sistema, será necessário realizar o login novamente.
 
-## 14. Considerações finais
+## 14. Armazenamento e cuidados com os dados
+
+A versão online utiliza PostgreSQL no Supabase; a execução local utiliza SQLite quando `DATABASE_URL` não está definida. Os dados da versão online são mantidos no banco remoto e não no computador de quem acessa o site. O histórico de movimentações e as solicitações permanecem vinculados às contas utilizadas.
+
+Não compartilhe senhas, tokens de sessão nem a variável `DATABASE_URL`. Após utilizar um computador compartilhado, clique em **Sair**.
+
+## 15. Considerações finais
 
 O MBF Stock reúne funcionalidades para organizar o cadastro de peças, acompanhar o estoque e registrar solicitações de materiais.
 
