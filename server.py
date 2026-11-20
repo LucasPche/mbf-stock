@@ -10,7 +10,7 @@ import time
 import math
 from security_service import validar_id, password_hash, check_password
 from inventory_service import stock_adjustment, reserve_withdrawal
-from database_repository import open_connection, ensure_column, database_errors
+from database_repository import open_connection, ensure_column, database_errors, using_postgres
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
@@ -688,7 +688,7 @@ class Handler(SimpleHTTPRequestHandler):
                 con.close()
                 self.send_json({"error": "Status invalido"}, 400)
                 return
-            req = cur.execute("SELECT * FROM requests WHERE id = ?", (request_id,)).fetchone()
+            req = cur.execute("SELECT * FROM requests WHERE id = ?" + (" FOR UPDATE" if using_postgres() else ""), (request_id,)).fetchone()
             if not req:
                 con.close()
                 self.send_json({"error": "Solicitacao nao encontrada"}, 404)
@@ -733,7 +733,7 @@ class Handler(SimpleHTTPRequestHandler):
                 con.close()
                 self.send_json({"error": "Status invalido"}, 400)
                 return
-            signup = cur.execute("SELECT * FROM signup_requests WHERE id = ?", (signup_id,)).fetchone()
+            signup = cur.execute("SELECT * FROM signup_requests WHERE id = ?" + (" FOR UPDATE" if using_postgres() else ""), (signup_id,)).fetchone()
             if not signup:
                 con.close()
                 self.send_json({"error": "Pedido de cadastro nao encontrado"}, 404)
