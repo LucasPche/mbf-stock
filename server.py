@@ -14,7 +14,7 @@ from database_repository import open_connection, ensure_column
 
 ROOT = Path(__file__).parent
 PUBLIC = ROOT / "public"
-DB = ROOT / "mbf_estoque.db"
+DB = Path(os.environ.get("DB_PATH", str(ROOT / "mbf_estoque.db")))
 SESSIONS = {}
 SESSION_TIMEOUT = 30 * 60
 
@@ -849,8 +849,11 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json({"error": "Rota nao encontrada"}, 404)
 
 
+
 if __name__ == "__main__":
     init_db()
-    server = ThreadingHTTPServer(("localhost", 8000), Handler)
-    print("MBF Estoque rodando em http://localhost:8000")
+    port = int(os.environ.get("PORT", "8000"))
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    print(f"MBF Estoque rodando na porta {port}")
     server.serve_forever()
+
