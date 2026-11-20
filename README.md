@@ -14,7 +14,8 @@ As principais tecnologias utilizadas no desenvolvimento foram:
 
 - **Python:** desenvolvimento do servidor e das funcionalidades do sistema.
 - **HTML, CSS e JavaScript:** criação da interface e interação com o usuário.
-- **SQLite:** banco local para desenvolvimento e testes.\n- **PostgreSQL (Supabase):** banco persistente quando `DATABASE_URL` estiver configurada.
+- **SQLite:** banco local para desenvolvimento e testes.
+- **PostgreSQL (Supabase):** banco persistente quando `DATABASE_URL` estiver configurada.
 - **JSON:** troca de dados entre o navegador e o servidor.
 - **Git e GitHub:** controle de versões do projeto.
 - **Unittest:** criação e execução dos testes automatizados.
@@ -22,11 +23,13 @@ As principais tecnologias utilizadas no desenvolvimento foram:
 
 ## 3. Requisitos para execução
 
-Para executar o sistema, é necessário ter:
+Para executar o sistema localmente, é necessário ter:
 
 - Python 3.11 ou superior.
 - Um navegador atualizado.
 - Acesso ao terminal ou ao VS Code.
+
+Instale as dependências do projeto com `python -m pip install -r requirements.txt`.
 
 Para verificar a cobertura dos testes, também é necessário instalar a biblioteca Coverage:
 
@@ -34,7 +37,13 @@ Para verificar a cobertura dos testes, também é necessário instalar a bibliot
 python -m pip install coverage
 ```
 
-## 4. Como executar
+## 4. Acesso online e execução local
+
+**Demonstração publicada no Render:** https://mbf-stock-teste.onrender.com/
+
+O acesso exige uma conta e senha válidas. O serviço gratuito pode demorar a responder após um período de inatividade.
+
+### Execução local
 
 Abra a pasta do projeto no VS Code e acesse o terminal.
 
@@ -116,7 +125,7 @@ Essa divisão ajuda a separar algumas responsabilidades do sistema e facilita a 
 
 ## 7. Banco de dados
 
-O MBF Stock utiliza SQLite localmente. Quando `DATABASE_URL` é configurada, a aplicação utiliza PostgreSQL (Supabase) para armazenar peças, usuários, solicitações e movimentações. A persistência remota precisa ser validada após o deploy.
+O MBF Stock utiliza SQLite localmente. Quando `DATABASE_URL` está configurada, a camada `database_repository.py` conecta ao PostgreSQL (Supabase) por meio do driver `psycopg`. A demonstração publicada foi verificada com registros visíveis no Supabase e persistência após reinicialização. O banco SQLite não é migrado automaticamente para o PostgreSQL.
 
 Durante o desenvolvimento, foram realizadas melhorias nas validações e na integridade dos dados, incluindo a ativação das chaves estrangeiras e verificações de quantidades e valores inválidos.
 
@@ -155,11 +164,10 @@ python -m coverage run --source=server,security_service,inventory_service,databa
 python -m coverage report -m
 ```
 
-Na execução realizada em 11/11/2026, foram obtidos os seguintes resultados:
+Na execução de CI da branch de migração em 20/11/2026, foram obtidos:
 
-- **45 testes executados.**
-- **45 testes aprovados.**
-- **Nenhum erro ou falha.**
+- **54 testes executados e aprovados**, sem falhas, no ambiente de testes automatizados.
+- A suíte usa SQLite local para testes unitários e não substitui testes de integração com PostgreSQL real.
 
 O relatório geral de cobertura apresentou 80%. Para avaliar especificamente o código da aplicação, deve ser utilizado o comando com `--source`, indicado acima.
 
@@ -178,7 +186,8 @@ Além deste README, o projeto possui arquivos complementares:
 - `MANUAL_USUARIO.md`: explica como utilizar as principais funcionalidades.
 - `MATRIZ_TESTES.md`: apresenta os testes e sua relação com os requisitos.
 - `ARQUITETURA_E_DECISOES.md`: descreve a organização técnica do sistema.
-- `RELATORIO_REVISAO.md`: registra as correções e verificações realizadas.
+- `supabase/README.md`: descreve a configuração e as verificações do PostgreSQL.
+- `docs/processo_retirada.bpmn`: modelo BPMN do processo de retirada.
 
 ## 12. Considerações finais
 
@@ -197,15 +206,15 @@ O sistema reúne recursos de cadastro, consulta, solicitações e histórico de 
 - Exportação CSV: tratamento de conteúdo que poderia ser interpretado como fórmula por planilhas.
 - Ver [ARQUITETURA_E_DECISOES.md](ARQUITETURA_E_DECISOES.md) para limitações e decisões técnicas.
 
-**Escopo:** projeto acadêmico em desenvolvimento. A separação em módulos não representa MVC completo. O SQLite local e o servidor `http.server` permanecem adequados somente à demonstração controlada, sem homologação corporativa. Os testes automatizados e a matriz de aceite devem ser reproduzidos no commit final.
+**Escopo:** projeto acadêmico de demonstração. A separação em módulos não representa MVC completo. O servidor `http.server` e as sessões em memória não constituem uma solução corporativa homologada. Os testes automatizados e a matriz de aceite devem ser reproduzidos no commit final.
 
 
-## Migração opcional para Supabase (branch supabase-postgres)
+## Configuração PostgreSQL (Supabase) e publicação
 
 - Instale dependências com `python -m pip install -r requirements.txt`.
 - Configure `DATABASE_URL` em ambiente seguro (não salve credenciais no Git).
 - Execute o esquema `supabase/schema.sql` no SQL Editor do projeto Supabase ou permita que a aplicação crie as tabelas ao iniciar.
 - A aplicação seleciona PostgreSQL automaticamente se `DATABASE_URL` estiver definida; caso contrário, usa SQLite local.
-- Em Render, ajuste o comando de build para `pip install -r requirements.txt` antes de publicar esta branch.
-- Teste conexão, login, cadastro, atualização, exclusão lógica, solicitações e persistência após reinicialização. Não há migração automática dos registros do SQLite antigo.
+- No Render, use o build `pip install -r requirements.txt` e a inicialização `python server.py`.
+- A conexão, o login, o cadastro de peça e a persistência após reinicialização foram verificados na demonstração. Para novas alterações, repita os testes de regressão. Não há migração automática dos registros do SQLite antigo.
 - O roteiro de validação está em `supabase/README.md`.
