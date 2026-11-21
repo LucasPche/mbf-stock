@@ -93,7 +93,7 @@ def ensure_column(cursor, table, column, definition):
         if (table, column) not in {
             ("users", "sector"), ("users", "active"), ("users", "terms_accepted_at"),
             ("signup_requests", "terms_accepted_at"),
-            ("parts", "supplier"), ("parts", "unit_price"), ("parts", "entry_date"),
+            ("parts", "supplier"), ("parts", "unit_price"), ("parts", "sector"), ("parts", "entry_date"),
             ("parts", "deleted_at"), ("parts", "deleted_by")
         }:
             raise ValueError("Identificador de esquema não permitido")
