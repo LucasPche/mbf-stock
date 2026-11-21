@@ -51,7 +51,7 @@ class APITests(unittest.TestCase):
             con.close()
 
     def login(self, username, password):
-        status, body = self.request('POST', '/api/login', {'username': username, 'password': password})
+        status, body = self.request('POST', '/api/login', {'username': username, 'password': password, 'terms_accepted': True})
         self.assertEqual(status, 200)
         return body['token']
 
@@ -92,7 +92,7 @@ class APITests(unittest.TestCase):
         self.assertTrue(all(c.closed for c in opened))
 
     def test_login_e_senha_incorreta(self):
-        self.assertEqual(self.request('POST', '/api/login', {'username':'admin','password':'errada'})[0], 401)
+        self.assertEqual(self.request('POST', '/api/login', {'username':'admin','password':'errada','terms_accepted':True})[0], 401)
         self.assertEqual(self.request('GET', '/api/parts')[0], 401)
 
     def test_permissoes_de_operador(self):
