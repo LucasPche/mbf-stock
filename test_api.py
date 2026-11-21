@@ -91,6 +91,22 @@ class APITests(unittest.TestCase):
             time.sleep(0.01)
         self.assertTrue(all(c.closed for c in opened))
 
+    def test_aceite_termos_obrigatorio(self):
+        status, body = self.request("POST", "/api/login", {"username": "admin", "password": "AdminTeste123!"})
+        self.assertEqual(status, 400)
+        self.assertIn("Termos de Uso", body["error"])
+        status, body = self.request("POST", "/api/signup", {"name": "Teste", "username": "testeaceite", "password": "Senha123!"})
+        self.assertEqual(status, 400)
+        self.assertIn("Termos de Uso", body["error"])
+        token = self.login("admin", "AdminTeste123!")
+        self.assertTrue(token)
+        con = server.connect()
+        try:
+            accepted = con.execute("SELECT terms_accepted_at FROM users WHERE username = ?", ("admin",)).fetchone()
+            self.assertIsNotNone(accepted["terms_accepted_at"])
+        finally:
+            con.close()
+
     def test_login_e_senha_incorreta(self):
         self.assertEqual(self.request('POST', '/api/login', {'username':'admin','password':'errada','terms_accepted':True})[0], 401)
         self.assertEqual(self.request('GET', '/api/parts')[0], 401)
