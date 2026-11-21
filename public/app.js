@@ -446,7 +446,8 @@ $("#loginForm").addEventListener("submit", async event => {
       method: "POST",
       body: JSON.stringify({
         username: $("#username").value,
-        password: $("#password").value
+        password: $("#password").value,
+        terms_accepted: $("#loginConsent").checked
       })
     });
     api.token = data.token;
@@ -479,7 +480,8 @@ $("#signupForm").addEventListener("submit", async event => {
         username: $("#signupUsername").value,
         password: $("#signupPassword").value,
         sector: $("#signupSector").value,
-        reason: $("#signupReason").value
+        reason: $("#signupReason").value,
+        terms_accepted: $("#signupConsent").checked
       })
     });
     $("#signupDialog").close();
