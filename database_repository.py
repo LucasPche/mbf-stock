@@ -90,8 +90,11 @@ def open_connection(database_path):
 
 def ensure_column(cursor, table, column, definition):
     if using_postgres():
-        if table not in {"users", "parts"} or column not in {
-            "sector", "active", "supplier", "unit_price", "entry_date", "deleted_at", "deleted_by"
+        if (table, column) not in {
+            ("users", "sector"), ("users", "active"), ("users", "terms_accepted_at"),
+            ("signup_requests", "terms_accepted_at"),
+            ("parts", "supplier"), ("parts", "unit_price"), ("parts", "entry_date"),
+            ("parts", "deleted_at"), ("parts", "deleted_by")
         }:
             raise ValueError("Identificador de esquema não permitido")
         cursor.execute(
