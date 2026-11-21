@@ -107,6 +107,8 @@ def init_db():
         """
     )
 
+    ensure_column(cur, "users", "terms_accepted_at", "TEXT DEFAULT NULL")
+    ensure_column(cur, "signup_requests", "terms_accepted_at", "TEXT DEFAULT NULL")
     ensure_column(cur, "users", "sector", "TEXT DEFAULT ''")
     ensure_column(cur, "users", "active", "INTEGER NOT NULL DEFAULT 1")
     ensure_column(cur, "parts", "supplier", "TEXT DEFAULT ''")
@@ -360,6 +362,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/signup":
+            if data.get("terms_accepted") is not True:
+                self.send_json({"error": "É necessário aceitar os Termos de Uso para solicitar cadastro"}, 400)
+                return
             required = ["name", "username", "password"]
             if any(str(data.get(field, "")).strip() == "" for field in required):
                 self.send_json({"error": "Preencha nome, usuario e senha"}, 400)
@@ -382,8 +387,8 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 con.execute(
                     """
-                    INSERT INTO signup_requests (name, username, password, sector, reason)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO signup_requests (name, username, password, sector, reason, terms_accepted_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     """,
                     (
                         data["name"].strip(),
@@ -400,6 +405,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/login":
+            if data.get("terms_accepted") is not True:
+                self.send_json({"error": "É necessário aceitar os Termos de Uso para acessar o sistema"}, 400)
+                return
             con = connect()
             user = con.execute("SELECT * FROM users WHERE username = ?", (data.get("username"),)).fetchone()
             con.close()
@@ -411,6 +419,12 @@ class Handler(SimpleHTTPRequestHandler):
                 registrar_log("LOGIN_BLOQUEADO", user["username"], "Conta desativada")
                 self.send_json({"error": "Usuario bloqueado. Procure o administrador"}, 403)
                 return
+            consent_con = connect()
+            try:
+                consent_con.execute("UPDATE users SET terms_accepted_at = CURRENT_TIMESTAMP WHERE id = ? AND terms_accepted_at IS NULL", (user["id"],))
+                consent_con.commit()
+            finally:
+                consent_con.close()
             registrar_log("LOGIN_SUCESSO", user["username"], "Autenticacao realizada")
             token = secrets.token_hex(24)
             session_user = {
@@ -749,8 +763,8 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": "Ja existe usuario com esse login"}, 409)
                     return
                 cur.execute(
-                    "INSERT INTO users (name, username, password, role, sector, active) VALUES (?, ?, ?, ?, ?, ?)",
-                    (signup["name"], signup["username"], signup["password"], "user", signup["sector"], 1),
+                    "INSERT INTO users (name, username, password, role, sector, active, terms_accepted_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (signup["name"], signup["username"], signup["password"], "user", signup["sector"], 1, signup["terms_accepted_at"]),
                 )
                 cur.execute(
                     "INSERT INTO movements (user_id, type, quantity, note) VALUES (?, ?, ?, ?)",
