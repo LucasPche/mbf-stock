@@ -545,3 +545,44 @@ dialog::backdrop {
     line-height: 1.7;
     font-size: 14px;
 }
+
+/* Aceite dos Termos de Uso: visual consistente com a tela de acesso. */
+.consent-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 14px;
+  background: #f5f8fb;
+  border: 1px solid #dce6ef;
+  border-radius: 10px;
+}
+.consent-box:focus-within { border-color: #5795c4; box-shadow: 0 0 0 3px rgba(31,95,145,.12); }
+.consent-box input[type="checkbox"] {
+  appearance: auto;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  min-height: 17px;
+  padding: 0;
+  margin: 2px 0 0;
+  border-radius: 4px;
+  flex: 0 0 17px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+.consent-box .consent-copy {
+  display: block;
+  color: #48596b;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+  cursor: pointer;
+}
+.consent-box .consent-copy a {
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.consent-box .consent-copy a:hover { color: var(--brand-dark); }
+.consent-box .consent-copy a:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
