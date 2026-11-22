@@ -93,6 +93,17 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
 
+        CREATE TABLE IF NOT EXISTS privacy_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            reason TEXT DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'pendente',
+            admin_note TEXT DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+
         CREATE TABLE IF NOT EXISTS signup_requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -323,6 +334,12 @@ class Handler(SimpleHTTPRequestHandler):
                 """
             ).fetchall()
             self.send_json({"movements": [row_dict(row) for row in rows]})
+        elif path == "/api/privacy-requests":
+            if user["role"] == "admin":
+                rows = cur.execute("SELECT p.*, u.name AS user_name, u.username FROM privacy_requests p JOIN users u ON u.id = p.user_id ORDER BY p.id DESC LIMIT 100").fetchall()
+            else:
+                rows = cur.execute("SELECT id, reason, status, admin_note, created_at, reviewed_at FROM privacy_requests WHERE user_id = ? ORDER BY id DESC LIMIT 30", (user["id"],)).fetchall()
+            self.send_json({"privacy_requests": [row_dict(row) for row in rows]})
         elif path == "/api/users":
             if user["role"] != "admin":
                 self.send_json({"error": "Acesso restrito ao administrador"}, 403)
@@ -359,6 +376,50 @@ class Handler(SimpleHTTPRequestHandler):
                 )
 
             self.send_json({"ok": True})
+            return
+
+        if path == "/api/privacy-requests":
+            user = self.require_user()
+            if not user:
+                return
+            reason = str(data.get("reason", "")).strip()[:1000]
+            con = connect()
+            try:
+                existing = con.execute("SELECT id FROM privacy_requests WHERE user_id = ? AND status = 'pendente'", (user["id"],)).fetchone()
+                if existing:
+                    self.send_json({"error": "Voce ja possui uma solicitacao pendente"}, 409)
+                    return
+                con.execute("INSERT INTO privacy_requests (user_id, reason) VALUES (?, ?)", (user["id"], reason))
+                con.commit()
+                registrar_log("SOLICITACAO_PRIVACIDADE", user["username"], "Pedido de exclusao de dados registrado")
+                self.send_json({"ok": True}, 201)
+            finally:
+                con.close()
+            return
+
+        if path == "/api/users":
+            user = self.require_admin()
+            if not user:
+                return
+            name = str(data.get("name", "")).strip()
+            username = str(data.get("username", "")).strip()
+            password = data.get("password", "")
+            role = data.get("role", "user")
+            if not name or not username or not isinstance(password, str) or len(password) < 8 or role not in ("admin", "user"):
+                self.send_json({"error": "Informe nome, login, perfil valido e senha com ao menos 8 caracteres"}, 400)
+                return
+            con = connect()
+            try:
+                existing = con.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+                if existing:
+                    self.send_json({"error": "Login ja cadastrado"}, 409)
+                    return
+                con.execute("INSERT INTO users (name, username, password, role, sector, active) VALUES (?, ?, ?, ?, ?, 1)", (name, username, password_hash(password), role, str(data.get("sector", "")).strip()))
+                con.commit()
+                registrar_log("USUARIO_CRIADO", user["username"], "Cadastro administrativo realizado")
+                self.send_json({"ok": True}, 201)
+            finally:
+                con.close()
             return
 
         if path == "/api/signup":
@@ -634,6 +695,33 @@ class Handler(SimpleHTTPRequestHandler):
             )
         )
             con.commit()
+            con.close()
+            self.send_json({"ok": True})
+            return
+
+        if path.startswith("/api/privacy-requests/"):
+            request_id = validar_id(path.rsplit("/", 1)[1])
+            if request_id is None:
+                con.close()
+                self.send_json({"error": "ID invalido"}, 400)
+                return
+            status = data.get("status")
+            if status not in ("em_analise", "concluido", "indeferido"):
+                con.close()
+                self.send_json({"error": "Status invalido"}, 400)
+                return
+            note = str(data.get("admin_note", "")).strip()[:1000]
+            if not note:
+                con.close()
+                self.send_json({"error": "Justificativa obrigatoria"}, 400)
+                return
+            cur.execute("UPDATE privacy_requests SET status = ?, admin_note = ?, reviewed_at = CURRENT_TIMESTAMP WHERE id = ? AND status IN ('pendente', 'em_analise')", (status, note, request_id))
+            if cur.rowcount != 1:
+                con.close()
+                self.send_json({"error": "Solicitacao inexistente ou ja encerrada"}, 409)
+                return
+            con.commit()
+            registrar_log("PRIVACIDADE_ANALISADA", user["username"], f"Solicitacao {request_id}: {status}")
             con.close()
             self.send_json({"ok": True})
             return
