@@ -96,6 +96,7 @@ async function loadAll() {
   }
   render();
   await loadPrivacyRequests();
+  if (api.user?.role === "admin") await loadAuditEvents();
 }
 
 function showApp() {
@@ -315,7 +316,7 @@ function renderReports() {
 
 function updateView() {
   // Proteção visual adicional: o servidor continua responsável pela autorização.
-  if (api.user?.role !== "admin" && ["admin", "usuarios"].includes(state.view)) {
+  if (api.user?.role !== "admin" && ["admin", "usuarios", "auditoria"].includes(state.view)) {
     state.view = "dashboard";
   }
   const titles = {
@@ -326,7 +327,8 @@ function updateView() {
     usuarios: ["Usuários", "Libere novos cadastros e acompanhe quem já tem acesso."],
     relatorios: ["Relatórios", "Exporte informações e acompanhe indicadores do estoque."],
     historico: ["Histórico", "Veja as movimentações registradas no banco de dados."],
-    privacidade: ["Meus dados e LGPD", "Solicite a exclusao de dados e acompanhe a analise."]
+    privacidade: ["Meus dados e LGPD", "Solicite a exclusao de dados e acompanhe a analise."],
+    auditoria: ["Auditoria", "Consulte os eventos de seguranca e operacoes do sistema."]
   };
   $$(".view").forEach(view => view.classList.add("hidden"));
   $(`#${state.view}View`).classList.remove("hidden");
@@ -726,3 +728,12 @@ window.reviewPrivacy = async id => {
   try { await request(`/api/privacy-requests/${id}`, {method:"PUT",body:JSON.stringify({status,admin_note})}); await loadPrivacyRequests(); }
   catch(error) { alert(error.message); }
 };
+
+async function loadAuditEvents() {
+  if (api.user?.role !== "admin") return;
+  try {
+    const data = await request("/api/audit-events");
+    $("#auditEventsList").innerHTML = (data.events || []).map(e => `<div class="request-card"><strong>${escapeHTML(e.action)}</strong><p>Data: ${escapeHTML(e.created_at)} | Usuario: ${escapeHTML(e.actor_name)}</p><p>${escapeHTML(e.details || "")}</p></div>`).join("") || "Nenhum evento registrado.";
+  } catch (error) { $("#auditEventsList").textContent = "Erro ao carregar auditoria: " + error.message; }
+}
+$("#refreshAudit").addEventListener("click", loadAuditEvents);
