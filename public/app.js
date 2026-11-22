@@ -95,6 +95,7 @@ async function loadAll() {
     state.signupRequests = [];
   }
   render();
+  await loadPrivacyRequests();
 }
 
 function showApp() {
@@ -324,7 +325,8 @@ function updateView() {
     admin: ["Admin peças", "Cadastre, edite e remova peças do estoque da MBF."],
     usuarios: ["Usuários", "Libere novos cadastros e acompanhe quem já tem acesso."],
     relatorios: ["Relatórios", "Exporte informações e acompanhe indicadores do estoque."],
-    historico: ["Histórico", "Veja as movimentações registradas no banco de dados."]
+    historico: ["Histórico", "Veja as movimentações registradas no banco de dados."],
+    privacidade: ["Meus dados e LGPD", "Solicite a exclusao de dados e acompanhe a analise."]
   };
   $$(".view").forEach(view => view.classList.add("hidden"));
   $(`#${state.view}View`).classList.remove("hidden");
@@ -363,7 +365,7 @@ function fillUserForm(user = null) {
   $("#userActive").value = user ? String(user.active) : "1";
   $("#userSector").value = user?.sector || "";
   $("#userPassword").value = "";
-  $("#userFormTitle").textContent = user ? "Editar usuario" : "Editar usuario";
+  $("#userFormTitle").textContent = user ? "Editar usuario" : "Cadastrar usuario";
 }
 
 window.editPart = id => {
@@ -574,12 +576,12 @@ $("#clearForm").addEventListener("click", () => fillForm());
 $("#userForm").addEventListener("submit", async event => {
   event.preventDefault();
   const id = $("#userId").value;
-  if (!id) {
-    alert("Selecione um usuario na lista para editar.");
+  if (!id && $("#userPassword").value.length < 8) {
+    alert("Para cadastrar, informe uma senha com pelo menos 8 caracteres.");
     return;
   }
-  await request(`/api/users/${id}`, {
-    method: "PUT",
+  await request(id ? `/api/users/${id}` : "/api/users", {
+    method: id ? "PUT" : "POST",
     body: JSON.stringify({
       name: $("#userName").value,
       username: $("#userUsername").value,
@@ -692,3 +694,35 @@ if (supplierCepInput && supplierAddressInput) {
         }
     });
 }
+
+
+// Solicitacoes LGPD: usuario consulta apenas as proprias; administrador pode analisar.
+async function loadPrivacyRequests() {
+  const data = await request("/api/privacy-requests");
+  const items = data.privacy_requests || [];
+  const list = $("#privacyRequestsList");
+  if (api.user?.role === "admin") {
+    list.textContent = "Solicitacoes de todos os usuarios disponiveis abaixo para analise.";
+    $("#privacyAdminList").innerHTML = items.map(item => `<div class="request-card"><strong>${escapeHTML(item.user_name)} (${escapeHTML(item.username)})</strong><p>Pedido #${Number(item.id)} — ${escapeHTML(item.status)} — ${escapeHTML(item.created_at)}</p><p>${escapeHTML(item.reason || "Sem observacoes")}</p><p>Resposta: ${escapeHTML(item.admin_note || "Aguardando")}</p>${["pendente","em_analise"].includes(item.status) ? `<button type="button" onclick="reviewPrivacy(${Number(item.id)})">Analisar pedido</button>` : ""}</div>`).join("") || "Nenhuma solicitacao."; 
+  } else {
+    list.innerHTML = items.map(item => `<div class="request-card"><strong>Solicitacao #${Number(item.id)} — ${escapeHTML(item.status)}</strong><p>Enviada: ${escapeHTML(item.created_at)}</p><p>Resposta: ${escapeHTML(item.admin_note || "Aguardando analise")}</p></div>`).join("") || "Nenhuma solicitacao."; 
+  }
+}
+$("#privacyForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    await request("/api/privacy-requests", {method:"POST", body:JSON.stringify({reason:$("#privacyReason").value})});
+    $("#privacyReason").value = "";
+    await loadPrivacyRequests();
+    alert("Solicitacao registrada para analise.");
+  } catch(error) { alert(error.message); }
+});
+window.reviewPrivacy = async id => {
+  if (api.user?.role !== "admin") return;
+  const status = prompt("Status: em_analise, concluido ou indeferido", "em_analise");
+  if (!["em_analise","concluido","indeferido"].includes(status)) return;
+  const admin_note = prompt("Informe a justificativa e as providencias realizadas:");
+  if (!admin_note?.trim()) return;
+  try { await request(`/api/privacy-requests/${id}`, {method:"PUT",body:JSON.stringify({status,admin_note})}); await loadPrivacyRequests(); }
+  catch(error) { alert(error.message); }
+};
