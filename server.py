@@ -32,6 +32,20 @@ def registrar_log(acao, usuario="sistema", detalhes=""):
         acao,
         detalhes
     )
+def registrar_auditoria(acao, usuario, detalhes="", actor_id=None):
+    """Auditoria persistente, sem senhas ou tokens. Falhas nao impedem operacoes."""
+    registrar_log(acao, usuario, detalhes)
+    con = None
+    try:
+        con = connect()
+        con.execute("INSERT INTO audit_events (actor_id, actor_name, action, details) VALUES (?, ?, ?, ?)", (actor_id, str(usuario)[:100], str(acao)[:100], str(detalhes)[:500]))
+        con.commit()
+    except Exception:
+        logging.exception("Falha ao persistir evento de auditoria")
+    finally:
+        if con is not None:
+            con.close()
+
 def connect():
     """Compatibilidade com chamadas existentes; acesso físico fica no repositório."""
     return open_connection(DB)
@@ -91,6 +105,15 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(part_id) REFERENCES parts(id),
             FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS audit_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            actor_id INTEGER,
+            actor_name TEXT NOT NULL,
+            action TEXT NOT NULL,
+            details TEXT DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS privacy_requests (
@@ -334,6 +357,12 @@ class Handler(SimpleHTTPRequestHandler):
                 """
             ).fetchall()
             self.send_json({"movements": [row_dict(row) for row in rows]})
+        elif path == "/api/audit-events":
+            if user["role"] != "admin":
+                self.send_json({"error": "Acesso restrito ao administrador"}, 403)
+            else:
+                rows = cur.execute("SELECT id, actor_name, action, details, created_at FROM audit_events ORDER BY id DESC LIMIT 200").fetchall()
+                self.send_json({"events": [row_dict(row) for row in rows]})
         elif path == "/api/privacy-requests":
             if user["role"] == "admin":
                 rows = cur.execute("SELECT p.*, u.name AS user_name, u.username FROM privacy_requests p JOIN users u ON u.id = p.user_id ORDER BY p.id DESC LIMIT 100").fetchall()
@@ -391,7 +420,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 con.execute("INSERT INTO privacy_requests (user_id, reason) VALUES (?, ?)", (user["id"], reason))
                 con.commit()
-                registrar_log("SOLICITACAO_PRIVACIDADE", user["username"], "Pedido de exclusao de dados registrado")
+                registrar_auditoria("SOLICITACAO_PRIVACIDADE", user["username"], "Pedido de exclusao de dados registrado", user["id"])
                 self.send_json({"ok": True}, 201)
             finally:
                 con.close()
@@ -416,7 +445,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 con.execute("INSERT INTO users (name, username, password, role, sector, active) VALUES (?, ?, ?, ?, ?, 1)", (name, username, password_hash(password), role, str(data.get("sector", "")).strip()))
                 con.commit()
-                registrar_log("USUARIO_CRIADO", user["username"], "Cadastro administrativo realizado")
+                registrar_auditoria("USUARIO_CRIADO", user["username"], "Cadastro administrativo realizado", user["id"])
                 self.send_json({"ok": True}, 201)
             finally:
                 con.close()
@@ -473,11 +502,11 @@ class Handler(SimpleHTTPRequestHandler):
             user = con.execute("SELECT * FROM users WHERE username = ?", (data.get("username"),)).fetchone()
             con.close()
             if not user or not check_password(data.get("password", ""), user["password"]):
-                registrar_log("LOGIN_FALHOU", "desconhecido", "Credenciais invalidas")
+                registrar_auditoria("LOGIN_FALHOU", "desconhecido", "Credenciais invalidas")
                 self.send_json({"error": "Usuario ou senha invalido"}, 401)
                 return
             if not user["active"]:
-                registrar_log("LOGIN_BLOQUEADO", user["username"], "Conta desativada")
+                registrar_auditoria("LOGIN_BLOQUEADO", user["username"], "Conta desativada", user["id"])
                 self.send_json({"error": "Usuario bloqueado. Procure o administrador"}, 403)
                 return
             consent_con = connect()
@@ -486,7 +515,7 @@ class Handler(SimpleHTTPRequestHandler):
                 consent_con.commit()
             finally:
                 consent_con.close()
-            registrar_log("LOGIN_SUCESSO", user["username"], "Autenticacao realizada")
+            registrar_auditoria("LOGIN_SUCESSO", user["username"], "Autenticacao realizada", user["id"])
             token = secrets.token_hex(24)
             session_user = {
                 "id": user["id"],
@@ -721,7 +750,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "Solicitacao inexistente ou ja encerrada"}, 409)
                 return
             con.commit()
-            registrar_log("PRIVACIDADE_ANALISADA", user["username"], f"Solicitacao {request_id}: {status}")
+            registrar_auditoria("PRIVACIDADE_ANALISADA", user["username"], f"Solicitacao {request_id}: {status}", user["id"])
             con.close()
             self.send_json({"ok": True})
             return
@@ -775,6 +804,7 @@ class Handler(SimpleHTTPRequestHandler):
             )
             con.commit()
             con.close()
+            registrar_auditoria("USUARIO_EDITADO", user["username"], f"Usuario ID: {target_id}", user["id"])
             self.send_json({"ok": True})
             return
 
