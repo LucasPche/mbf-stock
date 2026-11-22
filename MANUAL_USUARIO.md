@@ -12,7 +12,7 @@ O sistema possui dois perfis de acesso: administrador e operador.
 
 Para utilizar a versão online, basta ter um navegador atualizado, conexão com a internet e credenciais válidas. Não é necessário instalar Python no computador do usuário.
 
-**Endereço da demonstração:** https://mbf-stock-teste.onrender.com/
+**Endereço principal:** https://mbf-stock.onrender.com/\n\n**Ambiente de testes (quando disponível):** https://mbf-stock-teste.onrender.com/
 
 No plano gratuito do Render, o primeiro acesso após inatividade pode demorar. O acesso local para desenvolvimento é descrito a seguir.
 
@@ -43,8 +43,8 @@ Na tela inicial:
 
 1. Informe seu nome de usuário.
 2. Digite sua senha.
-3. Clique no botão de entrar.
-4. Aguarde o carregamento do painel principal.
+3. Marque a caixa de aceite dos Termos de Uso e da Política de Privacidade.\n4. Clique no botão de entrar.
+5. Aguarde o carregamento do painel principal.
 
 Em um banco de dados novo, os usuários iniciais são `admin` e `operador`, com as senhas definidas no terminal.
 
@@ -152,17 +152,17 @@ O histórico ajuda a identificar alterações realizadas no estoque e acompanhar
 
 O administrador possui acesso às funcionalidades de gerenciamento de usuários.
 
-Nessa área, é possível consultar as contas e analisar solicitações de cadastro, conforme as opções disponíveis na interface.
+Nessa área, é possível consultar contas, criar novos usuários diretamente e analisar solicitações de cadastro.\n\n**Cadastro administrativo:** acesse **Usuários**, clique em **Limpar** para abrir o formulário de novo cadastro, informe nome, login, perfil, setor e uma senha com no mínimo 8 caracteres e clique em **Salvar usuário**. O servidor armazena um hash PBKDF2-HMAC-SHA256 com salt, e não a senha em texto puro.\n\n**Cadastro por solicitação:** na tela de login, clique em **Solicitar cadastro**, preencha o formulário e aceite os Termos de Uso. O administrador deve acessar **Usuários > Pedidos de cadastro** e escolher **Liberar** ou **Rejeitar**.\n\n**Edição:** na lista de usuários liberados, clique em **Editar**. A senha pode ficar em branco quando não for alterada.
 
 O controle de permissões impede que operadores realizem operações administrativas sem autorização.
 
-## 10. Relatórios
+## 10. Privacidade e direitos do titular (LGPD)\n\nO usuário autenticado pode acessar **Meus dados e LGPD**, informar detalhes opcionais e clicar em **Solicitar exclusão de dados**. A solicitação aparece na seção **Acompanhamento** com seu status e a resposta do administrador. Não é possível abrir duas solicitações pendentes simultaneamente.\n\nO administrador também acessa **Meus dados e LGPD** para consultar as solicitações, clicar em **Analisar pedido**, indicar o status (**em análise**, **concluído** ou **indeferido**) e registrar a justificativa.\n\n**Limitação importante:** o sistema registra e acompanha a solicitação, mas ainda não elimina ou anonimiza automaticamente os dados pessoais. A conclusão administrativa não prova, por si só, a exclusão efetiva. A decisão deve observar a finalidade do tratamento e eventuais hipóteses legais de conservação. Não afirmar conformidade integral à LGPD apenas com esse recurso.\n\n## 11. Auditoria administrativa\n\nEntre como administrador e abra **Auditoria** no menu lateral. A tela mostra os eventos persistidos com data, usuário, ação e detalhes; use **Atualizar registros** para recarregar os eventos mais recentes. Operadores não têm acesso à consulta de auditoria.\n\nO registro persistente inclui eventos de autenticação, criação e edição administrativa de usuários e solicitações de privacidade. A auditoria ainda não representa cobertura de todas as ações possíveis do sistema. O banco PostgreSQL/Supabase é o meio de persistência; o acesso para consulta é realizado pela própria interface, com autorização administrativa.\n\n## 12. Relatórios
 
 O sistema disponibiliza informações de estoque e recursos de relatório para auxiliar no acompanhamento dos materiais.
 
 Quando disponível na tela, a exportação em CSV permite obter os dados em um formato que pode ser aberto em programas de planilha.
 
-## 11. Consulta de CEP
+## 13. Consulta de CEP
 
 O MBF Stock utiliza o serviço ViaCEP para auxiliar no preenchimento de informações de endereço do fornecedor.
 
@@ -170,7 +170,7 @@ Ao informar um CEP válido, o navegador pode consultar os dados correspondentes 
 
 Essa consulta auxilia o preenchimento do formulário, mas os dados obtidos do ViaCEP não são persistidos no banco de dados pela integração atual.
 
-## 12. Como sair do sistema
+## 14. Como sair do sistema
 
 Ao terminar de utilizar o MBF Stock:
 
@@ -180,7 +180,7 @@ Ao terminar de utilizar o MBF Stock:
 
 O sistema também encerra sessões após aproximadamente 30 minutos de inatividade.
 
-## 13. Problemas comuns
+## 15. Problemas comuns
 
 ### Não consigo acessar o sistema
 
@@ -202,13 +202,13 @@ Confira a quantidade disponível. O sistema impede retiradas que deixariam o est
 
 Caso permaneça um período sem utilizar o sistema, será necessário realizar o login novamente.
 
-## 14. Armazenamento e cuidados com os dados
+## 16. Armazenamento e cuidados com os dados
 
 A versão online utiliza PostgreSQL no Supabase; a execução local utiliza SQLite quando `DATABASE_URL` não está definida. Os dados da versão online são mantidos no banco remoto e não no computador de quem acessa o site. O histórico de movimentações e as solicitações permanecem vinculados às contas utilizadas.
 
 Não compartilhe senhas, tokens de sessão nem a variável `DATABASE_URL`. Após utilizar um computador compartilhado, clique em **Sair**.
 
-## 15. Considerações finais
+## 17. Considerações finais
 
 O MBF Stock reúne funcionalidades para organizar o cadastro de peças, acompanhar o estoque e registrar solicitações de materiais.
 
