@@ -55,6 +55,43 @@ class APITests(unittest.TestCase):
         self.assertEqual(status, 200)
         return body['token']
 
+    def test_cadastro_administrativo_e_senha_hash(self):
+        admin = self.login('admin', 'AdminTeste123!')
+        operator = self.login('operador', 'OperadorTeste123!')
+        payload = {'name':'Novo Operador', 'username':'novo_teste_lgpd', 'password':'SenhaSegura123!', 'role':'user', 'sector':'Estoque'}
+        self.assertEqual(self.request('POST','/api/users',payload,operator)[0],403)
+        self.assertEqual(self.request('POST','/api/users',dict(payload,password='curta'),admin)[0],400)
+        self.assertEqual(self.request('POST','/api/users',payload,admin)[0],201)
+        self.assertEqual(self.request('POST','/api/users',payload,admin)[0],409)
+        con = server.connect()
+        try:
+            row = con.execute("SELECT password FROM users WHERE username = ?", (payload['username'],)).fetchone()
+            self.assertNotEqual(row['password'], payload['password'])
+            self.assertTrue(server.check_password(payload['password'],row['password']))
+        finally:
+            con.close()
+        self.assertTrue(self.login(payload['username'],payload['password']))
+
+    def test_privacidade_solicitacao_e_auditoria(self):
+        operator = self.login('operador','OperadorTeste123!')
+        admin = self.login('admin','AdminTeste123!')
+        self.assertEqual(self.request('GET','/api/audit-events',token=operator)[0],403)
+        self.assertEqual(self.request('POST','/api/privacy-requests',{'reason':'Solicito eliminacao'},operator)[0],201)
+        self.assertEqual(self.request('POST','/api/privacy-requests',{'reason':'Duplicado'},operator)[0],409)
+        status, data = self.request('GET','/api/privacy-requests',token=operator)
+        self.assertEqual(status,200)
+        self.assertTrue(data['privacy_requests'])
+        self.assertNotIn('user_name',data['privacy_requests'][0])
+        status, data = self.request('GET','/api/privacy-requests',token=admin)
+        self.assertEqual(status,200)
+        req = next(x for x in data['privacy_requests'] if x['username']=='operador' and x['status']=='pendente')
+        self.assertEqual(self.request('PUT',f"/api/privacy-requests/{req['id']}",{'status':'concluido'},admin)[0],400)
+        self.assertEqual(self.request('PUT',f"/api/privacy-requests/{req['id']}",{'status':'em_analise','admin_note':'Avaliacao iniciada'},admin)[0],200)
+        status, data = self.request('GET','/api/audit-events',token=admin)
+        self.assertEqual(status,200)
+        self.assertTrue(any(x['action']=='PRIVACIDADE_ANALISADA' for x in data['events']))
+        self.assertTrue(all('password' not in str(x).lower() for x in data['events']))
+
     def test_consulta_sessao_fecha_conexao(self):
         """Cada consulta autenticada deve fechar a conexão SQLite utilizada."""
         from unittest.mock import patch
