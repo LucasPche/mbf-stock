@@ -44,6 +44,7 @@
       <button class="nav admin-only" data-view="admin">Admin pe&ccedil;as</button>
       <button class="nav admin-only" data-view="usuarios">Usu&aacute;rios</button>
       <button class="nav admin-only" data-view="relatorios">Relat&oacute;rios</button>
+      <button class="nav admin-only" data-view="auditoria">Auditoria</button>
       <button class="nav admin-only" data-view="historico">Hist&oacute;rico</button>
       <button class="nav" data-view="privacidade">Meus dados e LGPD</button>
       <button class="nav muted" id="logoutBtn">Sair</button>
@@ -262,6 +263,8 @@
           </div>
         </div>
       </section>
+
+      <section id="auditoriaView" class="view hidden"><div class="panel"><h3>Registro de auditoria</h3><p>Eventos persistidos no banco e consultados com permissao administrativa pela interface. Nao exibe senhas ou tokens.</p><button type="button" id="refreshAudit">Atualizar registros</button><div id="auditEventsList" class="request-list"></div></div></section>
 
       <section id="privacidadeView" class="view hidden">
         <div class="panel form">
