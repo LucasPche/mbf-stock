@@ -45,6 +45,7 @@
       <button class="nav admin-only" data-view="usuarios">Usu&aacute;rios</button>
       <button class="nav admin-only" data-view="relatorios">Relat&oacute;rios</button>
       <button class="nav admin-only" data-view="historico">Hist&oacute;rico</button>
+      <button class="nav" data-view="privacidade">Meus dados e LGPD</button>
       <button class="nav muted" id="logoutBtn">Sair</button>
     </aside>
 
@@ -219,7 +220,7 @@
         <div class="grid-2">
           <form class="panel form" id="userForm">
             <div class="panel-head flat">
-              <h3 id="userFormTitle">Editar usuario</h3>
+              <h3 id="userFormTitle">Cadastrar ou editar usuario</h3>
               <button class="secondary" type="button" id="clearUserForm">Limpar</button>
             </div>
             <input type="hidden" id="userId">
@@ -240,7 +241,7 @@
               </label>
             </div>
             <label>Setor <input id="userSector" placeholder="Administra&ccedil;&atilde;o, Corte, Solda..."></label>
-            <label>Nova senha <input id="userPassword" type="password" placeholder="Deixe vazio para manter"></label>
+            <label>Senha <input id="userPassword" type="password" placeholder="Obrigatoria no cadastro; opcional na edicao"></label>
             <button type="submit">Salvar usuario</button>
           </form>
 
@@ -259,6 +260,16 @@
             </div>
             <div class="request-list" id="usersList"></div>
           </div>
+        </div>
+      </section>
+
+      <section id="privacidadeView" class="view hidden">
+        <div class="panel form">
+          <h3>Direitos sobre seus dados pessoais</h3>
+          <p>Solicite a exclusao de seus dados pessoais. O administrador analisara o pedido e informara quais dados podem ser eliminados e quais precisam ser mantidos por obrigacao legal ou necessidade de auditoria. A solicitacao nao exclui sua conta automaticamente.</p>
+          <form id="privacyForm" class="form"><label>Informacoes adicionais (opcional)<textarea id="privacyReason" maxlength="1000" placeholder="Descreva sua solicitacao"></textarea></label><button type="submit">Solicitar exclusao de dados</button></form>
+          <h3>Acompanhamento</h3><div id="privacyRequestsList" class="request-list"></div>
+          <div class="admin-only"><h3>Analise administrativa</h3><div id="privacyAdminList" class="request-list"></div></div>
         </div>
       </section>
 
