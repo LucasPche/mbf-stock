@@ -726,12 +726,30 @@ $("#privacyForm").addEventListener("submit", async event => {
 });
 window.reviewPrivacy = async id => {
   if (api.user?.role !== "admin") return;
-  const status = prompt("Status: em_analise, concluido ou indeferido", "em_analise");
-  if (!["em_analise","concluido","indeferido"].includes(status)) return;
-  const admin_note = prompt("Informe a justificativa e as providencias realizadas:");
-  if (!admin_note?.trim()) return;
-  try { await request(`/api/privacy-requests/${id}`, {method:"PUT",body:JSON.stringify({status,admin_note})}); await loadPrivacyRequests(); }
-  catch(error) { alert(error.message); }
+  const dialog = document.createElement("dialog");
+  dialog.style.cssText = "width:min(480px,90vw);padding:24px;border:1px solid #d5dee8;border-radius:12px";
+  dialog.innerHTML = '<form><h2>Analisar solicitação LGPD</h2><label for="privacyReviewStatus">Situação</label><select id="privacyReviewStatus" style="width:100%;margin:8px 0 16px"><option value="em_analise">Em análise</option><option value="indeferido">Indeferido</option></select><label for="privacyReviewNote">Justificativa e providências</label><textarea id="privacyReviewNote" required maxlength="1000" rows="4" style="width:100%;margin:8px 0"></textarea><p>A conclusão exige comprovação do tratamento dos dados e ainda não está disponível nesta tela.</p><p role="alert"></p><div class="row-actions"><button type="submit">Salvar resposta</button><button type="button" class="secondary">Cancelar</button></div></form>';
+  document.body.appendChild(dialog);
+  dialog.addEventListener("close", () => dialog.remove(), {once:true});
+  dialog.querySelector('button[type="button"]').onclick = () => dialog.close();
+  dialog.querySelector("form").onsubmit = async event => {
+    event.preventDefault();
+    const status = dialog.querySelector("select").value;
+    const admin_note = dialog.querySelector("textarea").value.trim();
+    if (!admin_note) return;
+    const button = dialog.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try {
+      await request(`/api/privacy-requests/${id}`, {method:"PUT",body:JSON.stringify({status,admin_note})});
+      dialog.close();
+      await loadPrivacyRequests();
+      await loadAuditEvents();
+    } catch(error) {
+      dialog.querySelector('[role="alert"]').textContent = error.message;
+      button.disabled = false;
+    }
+  };
+  dialog.showModal();
 };
 
 async function loadAuditEvents() {
