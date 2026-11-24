@@ -223,7 +223,7 @@ function renderUsers() {
       <p>Setor: ${escapeHTML(user.sector || "Não informado")}</p>
       <div class="row-actions">
         <button class="secondary" onclick="editUser(${userId})">Editar</button>
-        <button class="secondary" onclick="deleteUser(${userId})">Excluir</button>
+        ${Number(user.active) === 1 ? `<button class="secondary" onclick="deleteUser(${userId})">Desativar</button>` : ""}
       </div>
     </article>
     `;
@@ -435,10 +435,15 @@ window.editUser = id => {
 };
 
 window.deleteUser = async id => {
-  if (!confirm("Excluir este usuario?")) return;
-  await request(`/api/users/${id}`, { method: "DELETE" });
-  fillUserForm();
-  await loadAll();
+  if (!confirm("Desativar este usuário? O acesso será bloqueado e o histórico preservado.")) return;
+  try {
+    await request(`/api/users/${id}`, { method: "DELETE" });
+    fillUserForm();
+    await loadAll();
+    alert("Usuário desativado com sucesso.");
+  } catch (error) {
+    alert(error.message || "Não foi possível desativar o usuário.");
+  }
 };
 
 $("#loginForm").addEventListener("submit", async event => {
