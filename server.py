@@ -735,13 +735,9 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "ID invalido"}, 400)
                 return
             status = data.get("status")
-            if status == "concluido":
-                con.close()
-                self.send_json({"error": "Conclusao indisponivel ate a implementacao do tratamento efetivo dos dados"}, 400)
-                return
             if status not in ("em_analise", "indeferido"):
                 con.close()
-                self.send_json({"error": "Status invalido"}, 400)
+                self.send_json({"error": "Status invalido; conclusao exige tratamento efetivo dos dados"}, 400)
                 return
             note = str(data.get("admin_note", "")).strip()[:1000]
             if not note:
