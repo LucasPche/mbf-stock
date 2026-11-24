@@ -414,7 +414,7 @@ class Handler(SimpleHTTPRequestHandler):
             reason = str(data.get("reason", "")).strip()[:1000]
             con = connect()
             try:
-                existing = con.execute("SELECT id FROM privacy_requests WHERE user_id = ? AND status = 'pendente'", (user["id"],)).fetchone()
+                existing = con.execute("SELECT id FROM privacy_requests WHERE user_id = ? AND status IN ('pendente', 'em_analise')", (user["id"],)).fetchone()
                 if existing:
                     self.send_json({"error": "Voce ja possui uma solicitacao pendente"}, 409)
                     return
@@ -735,7 +735,11 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"error": "ID invalido"}, 400)
                 return
             status = data.get("status")
-            if status not in ("em_analise", "concluido", "indeferido"):
+            if status == "concluido":
+                con.close()
+                self.send_json({"error": "Conclusao indisponivel ate a implementacao do tratamento efetivo dos dados"}, 400)
+                return
+            if status not in ("em_analise", "indeferido"):
                 con.close()
                 self.send_json({"error": "Status invalido"}, 400)
                 return
