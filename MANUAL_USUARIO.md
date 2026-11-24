@@ -12,7 +12,9 @@ O sistema possui dois perfis de acesso: administrador e operador.
 
 Para utilizar a versão online, basta ter um navegador atualizado, conexão com a internet e credenciais válidas. Não é necessário instalar Python no computador do usuário.
 
-**Endereço principal:** https://mbf-stock.onrender.com/\n\n**Ambiente de testes (quando disponível):** https://mbf-stock-teste.onrender.com/
+**Endereço principal:** https://mbf-stock.onrender.com/
+
+**Ambiente de testes (quando disponível):** https://mbf-stock-teste.onrender.com/
 
 No plano gratuito do Render, o primeiro acesso após inatividade pode demorar. O acesso local para desenvolvimento é descrito a seguir.
 
@@ -43,7 +45,8 @@ Na tela inicial:
 
 1. Informe seu nome de usuário.
 2. Digite sua senha.
-3. Marque a caixa de aceite dos Termos de Uso e da Política de Privacidade.\n4. Clique no botão de entrar.
+3. Marque a caixa de aceite dos Termos de Uso e da Política de Privacidade.
+4. Clique no botão de entrar.
 5. Aguarde o carregamento do painel principal.
 
 Em um banco de dados novo, os usuários iniciais são `admin` e `operador`, com as senhas definidas no terminal.
@@ -152,11 +155,33 @@ O histórico ajuda a identificar alterações realizadas no estoque e acompanhar
 
 O administrador possui acesso às funcionalidades de gerenciamento de usuários.
 
-Nessa área, é possível consultar contas, criar novos usuários diretamente e analisar solicitações de cadastro.\n\n**Cadastro administrativo:** acesse **Usuários**, clique em **Limpar** para abrir o formulário de novo cadastro, informe nome, login, perfil, setor e uma senha com no mínimo 8 caracteres e clique em **Salvar usuário**. O servidor armazena um hash PBKDF2-HMAC-SHA256 com salt, e não a senha em texto puro.\n\n**Cadastro por solicitação:** na tela de login, clique em **Solicitar cadastro**, preencha o formulário e aceite os Termos de Uso. O administrador deve acessar **Usuários > Pedidos de cadastro** e escolher **Liberar** ou **Rejeitar**.\n\n**Edição:** na lista de usuários liberados, clique em **Editar**. A senha pode ficar em branco quando não for alterada.
+Nessa área, é possível consultar contas, criar novos usuários diretamente e analisar solicitações de cadastro.
+
+**Cadastro administrativo:** acesse **Usuários**, clique em **Limpar** para abrir o formulário de novo cadastro, informe nome, login, perfil, setor e uma senha com no mínimo 8 caracteres e clique em **Salvar usuário**. O servidor armazena um hash PBKDF2-HMAC-SHA256 com salt, e não a senha em texto puro.
+
+**Cadastro por solicitação:** na tela de login, clique em **Solicitar cadastro**, preencha o formulário e aceite os Termos de Uso. O administrador deve acessar **Usuários > Pedidos de cadastro** e escolher **Liberar** ou **Rejeitar**.
+
+**Edição:** na lista de usuários liberados, clique em **Editar**. A senha pode ficar em branco quando não for alterada.
+
+**Desativação:** na lista de usuários, selecione **Desativar** e confirme. A conta perde o acesso, mas o histórico permanece preservado. A desativação não exclui dados pessoais.
 
 O controle de permissões impede que operadores realizem operações administrativas sem autorização.
 
-## 10. Privacidade e direitos do titular (LGPD)\n\nO usuário autenticado pode acessar **Meus dados e LGPD**, informar detalhes opcionais e clicar em **Solicitar exclusão de dados**. A solicitação aparece na seção **Acompanhamento** com seu status e a resposta do administrador. Não é possível abrir duas solicitações pendentes simultaneamente.\n\nO administrador também acessa **Meus dados e LGPD** para consultar as solicitações, clicar em **Analisar pedido**, indicar o status (**em análise**, **concluído** ou **indeferido**) e registrar a justificativa.\n\n**Limitação importante:** o sistema registra e acompanha a solicitação, mas ainda não elimina ou anonimiza automaticamente os dados pessoais. A conclusão administrativa não prova, por si só, a exclusão efetiva. A decisão deve observar a finalidade do tratamento e eventuais hipóteses legais de conservação. Não afirmar conformidade integral à LGPD apenas com esse recurso.\n\n## 11. Auditoria administrativa\n\nEntre como administrador e abra **Auditoria** no menu lateral. A tela mostra os eventos persistidos com data, usuário, ação e detalhes; use **Atualizar registros** para recarregar os eventos mais recentes. Operadores não têm acesso à consulta de auditoria.\n\nO registro persistente inclui eventos de autenticação, criação e edição administrativa de usuários e solicitações de privacidade. A auditoria ainda não representa cobertura de todas as ações possíveis do sistema. O banco PostgreSQL/Supabase é o meio de persistência; o acesso para consulta é realizado pela própria interface, com autorização administrativa.\n\n## 12. Relatórios
+## 10. Privacidade e direitos do titular (LGPD)
+
+O usuário autenticado pode acessar **Meus dados e LGPD**, informar detalhes opcionais e clicar em **Solicitar exclusão de dados**. A solicitação aparece na seção **Acompanhamento** com seu status e a resposta do administrador. Não é possível abrir duas solicitações pendentes simultaneamente.
+
+O administrador também acessa **Meus dados e LGPD** para consultar as solicitações, clicar em **Analisar pedido**, indicar o status (**em análise** ou **indeferido**) e registrar a justificativa.
+
+**Limitação importante:** o sistema registra e acompanha a solicitação, mas ainda não elimina ou anonimiza automaticamente os dados pessoais. A opção de conclusão está indisponível até que exista tratamento efetivo dos dados. A decisão deve observar a finalidade do tratamento e eventuais hipóteses legais de conservação. Esse recurso não representa, isoladamente, conformidade integral à LGPD.
+
+## 11. Auditoria administrativa
+
+Entre como administrador e abra **Auditoria** no menu lateral. A tela mostra os eventos persistidos com data, usuário, ação e detalhes; use **Atualizar registros** para recarregar os eventos mais recentes. Operadores não têm acesso à consulta de auditoria.
+
+O registro persistente inclui eventos de autenticação, criação e edição administrativa de usuários e solicitações de privacidade. A auditoria ainda não representa cobertura de todas as ações possíveis do sistema. O banco PostgreSQL/Supabase é o meio de persistência; o acesso para consulta é realizado pela própria interface, com autorização administrativa.
+
+## 12. Relatórios
 
 O sistema disponibiliza informações de estoque e recursos de relatório para auxiliar no acompanhamento dos materiais.
 
@@ -184,7 +209,7 @@ O sistema também encerra sessões após aproximadamente 30 minutos de inativida
 
 ### Não consigo acessar o sistema
 
-Na versão online, confira a conexão com a internet e o endereço `https://mbf-stock-teste.onrender.com/`; aguarde a inicialização se o serviço gratuito estiver inativo. Na execução local, verifique se `python server.py` está em execução e se `http://localhost:8000` foi digitado corretamente.
+Na versão online, confira a conexão com a internet e o endereço `https://mbf-stock.onrender.com/`; aguarde a inicialização se o serviço gratuito estiver inativo. Na execução local, verifique se `python server.py` está em execução e se `http://localhost:8000` foi digitado corretamente.
 
 ### Usuário ou senha incorretos
 
