@@ -39,7 +39,7 @@ python -m pip install coverage
 
 ## 4. Acesso online e execução local
 
-**Demonstração publicada no Render:** https://mbf-stock-teste.onrender.com/
+**Demonstração publicada no Render:** https://mbf-stock.onrender.com/
 
 O acesso exige uma conta e senha válidas. O serviço gratuito pode demorar a responder após um período de inatividade.
 
@@ -102,7 +102,15 @@ Isso facilita o acompanhamento das alterações feitas no estoque.
 
 ### Gerenciamento de usuários
 
-O administrador possui acesso às funções de gerenciamento de usuários e às solicitações de cadastro, conforme as permissões implementadas.
+O administrador pode cadastrar usuários diretamente, editar contas, analisar pedidos de cadastro e desativar contas. A desativação impede novos acessos e preserva o histórico de estoque.
+
+### Privacidade e LGPD
+
+O aceite dos Termos de Uso e da Política de Privacidade é exigido no login e na solicitação de cadastro. O usuário pode solicitar a exclusão de dados e acompanhar a resposta administrativa. O administrador pode registrar a análise ou o indeferimento, com justificativa obrigatória. A exclusão efetiva ou anonimização dos dados ainda não está implementada; a desativação não equivale à exclusão.
+
+### Auditoria
+
+O painel administrativo permite consultar eventos persistidos de autenticação, gerenciamento de usuários e análise de solicitações de privacidade, com data, ação e responsável.
 
 ## 6. Organização dos arquivos
 
@@ -164,7 +172,7 @@ python -m coverage run --source=server,security_service,inventory_service,databa
 python -m coverage report -m
 ```
 
-Na execução de CI da branch de migração em 20/11/2026, foram obtidos:
+Na execução histórica de CI de 20/11/2026, foram obtidos os resultados abaixo. Os dois workflows do commit `9eaf49f4`, de 23/11/2026, também foram aprovados; a cobertura atual deve ser consultada nos respectivos relatórios.
 
 - **54 testes executados e aprovados**, sem falhas, no ambiente de testes automatizados.
 - **65% de cobertura** dos módulos `server`, `security_service`, `inventory_service` e `database_repository`, medida pelo Coverage.py no GitHub Actions da branch `entregafinal` em 20/11/2026, superando o mínimo de 50% exigido para a Entrega 6.
