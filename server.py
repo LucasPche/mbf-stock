@@ -973,10 +973,16 @@ class Handler(SimpleHTTPRequestHandler):
                     con.close()
                     self.send_json({"error": "Mantenha pelo menos um administrador ativo"}, 400)
                     return
-            con.execute("DELETE FROM users WHERE id = ?", (target_id,))
-            con.commit()
-            con.close()
-            self.send_json({"ok": True})
+            try:
+                con.execute("UPDATE users SET active = 0 WHERE id = ?", (target_id,))
+                con.commit()
+                registrar_auditoria("USUARIO_DESATIVADO", user["username"], f"Usuario ID: {target_id}", user["id"])
+                self.send_json({"ok": True, "message": "Usuario desativado; historico preservado. Exclusao de dados deve ser tratada pelo fluxo LGPD."})
+            except database_errors():
+                con.rollback()
+                self.send_json({"error": "Nao foi possivel desativar o usuario"}, 500)
+            finally:
+                con.close()
             return
         self.send_json({"error": "Rota nao encontrada"}, 404)
 
